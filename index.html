@@ -4,6 +4,7 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <meta name="color-scheme" content="light">
+<link rel="manifest" href="manifest.json">
 <title>DIETA 1.0.24 — журнал питания и веса</title>
 <style>
 :root{
@@ -1364,6 +1365,13 @@ function __dietaCheck(retries){
   else if (sp) { __dietaDrawDiag(sp); }
 }
 setTimeout(function(){ __dietaCheck(8); }, 6000);
+</script>
+<script>
+  if ('serviceWorker' in navigator) {
+    navigator.serviceWorker.register('service-worker.js').catch(function(err) {
+      console.log('Service Worker registration failed:', err);
+    });
+  }
 </script>
 </body>
 </html>
