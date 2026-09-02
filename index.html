@@ -4,8 +4,14 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <meta name="color-scheme" content="light">
+<meta name="theme-color" content="#24301f">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="default">
+<meta name="apple-mobile-web-app-title" content="DIETA">
 <link rel="manifest" href="manifest.json">
-<title>DIETA 1.0.24 — журнал питания и веса</title>
+<link rel="icon" type="image/png" sizes="512x512" href="icon-512.png">
+<link rel="apple-touch-icon" href="icon-512.png">
+<title>DIETA 1.0.25 — журнал питания и веса</title>
 <style>
 :root{
   --bg:#f4efe2; --surface:#fbf8ef; --surface2:#efe8d6; --ink:#24301f; --muted:#71805f;
@@ -221,7 +227,7 @@ main{flex:1;padding:18px 0 calc(var(--tab-h) + 40px)}
 <div id="d-splash">
   <div class="s-logo">DIETA<b>.</b></div>
   <div class="s-sub">журнал питания</div>
-  <div class="s-ver">v 1.0.24</div>
+  <div class="s-ver">v 1.0.25</div>
   <div class="s-cursor"></div>
 </div>
 
@@ -369,7 +375,7 @@ window.__dietaScriptInfo = window.__dietaScriptInfo || function(){
 };
 (function () {
 'use strict';
-var APP_VERSION = '1.0.24';
+var APP_VERSION = '1.0.25';
 var CLAIMED = window.__DIETA_CLAIMED_VERSION;
 function verGT(a,b){ var pa=a.split('.').map(Number), pb=b.split('.').map(Number);
   for(var i=0;i<3;i++){ if((pa[i]||0)>(pb[i]||0)) return true; if((pa[i]||0)<(pb[i]||0)) return false; } return false; }
@@ -1366,12 +1372,13 @@ function __dietaCheck(retries){
 }
 setTimeout(function(){ __dietaCheck(8); }, 6000);
 </script>
+
 <script>
-  if ('serviceWorker' in navigator) {
-    navigator.serviceWorker.register('service-worker.js').catch(function(err) {
-      console.log('Service Worker registration failed:', err);
-    });
-  }
+if ('serviceWorker' in navigator) {
+  navigator.serviceWorker.register('service-worker.js').catch(function(err) {
+    console.log('Service Worker registration failed:', err);
+  });
+}
 </script>
 </body>
 </html>
