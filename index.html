@@ -1,0 +1,1369 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="color-scheme" content="light">
+<title>DIETA 1.0.24 — журнал питания и веса</title>
+<style>
+:root{
+  --bg:#f4efe2; --surface:#fbf8ef; --surface2:#efe8d6; --ink:#24301f; --muted:#71805f;
+  --line:#e0d8c2; --green:#3e7c46; --green-deep:#2c5c34; --green-soft:#e3ecd9;
+  --amber:#d98e2b; --amber-soft:#f6e8cd; --red:#b5453a; --r:12px;
+  --tab-h:calc(60px + env(safe-area-inset-bottom));
+}
+*{margin:0;padding:0;box-sizing:border-box;-webkit-tap-highlight-color:transparent}
+html,body{height:100%}
+body{
+  background:var(--bg);color:var(--ink);
+  font-family:"Avenir Next","Segoe UI",system-ui,-apple-system,sans-serif;
+  font-size:14.5px;line-height:1.45;-webkit-font-smoothing:antialiased;
+}
+.num{font-variant-numeric:tabular-nums;font-feature-settings:"tnum"}
+button{font:inherit;color:inherit;background:none;border:none;cursor:pointer}
+input,select{font:inherit;color:inherit}
+svg{width:20px;height:20px;fill:none;stroke:currentColor;stroke-width:1.8;stroke-linecap:round;stroke-linejoin:round;flex:none}
+
+body::before{
+  content:"";position:fixed;inset:0;z-index:-1;pointer-events:none;
+  background:
+    radial-gradient(720px 420px at 88% -8%, rgba(217,142,43,.14), transparent 62%),
+    radial-gradient(640px 460px at -6% 104%, rgba(62,124,70,.12), transparent 60%),
+    repeating-linear-gradient(0deg, rgba(62,124,70,.035) 0 1px, transparent 1px 34px);
+}
+
+#app{max-width:min(520px,100% - 20px);margin:0 auto;min-height:100dvh;display:flex;flex-direction:column}
+main{flex:1;padding:18px 0 calc(var(--tab-h) + 40px)}
+.screen{display:none}
+.screen.active{display:block;animation:fadeUp .3s ease both}
+@keyframes fadeUp{from{opacity:0;transform:translateY(10px)}}
+@keyframes rowIn{from{opacity:0;transform:translateY(6px)}}
+.row-anim{animation:rowIn .3s ease both}
+
+.h-title{font-size:26px;font-weight:800;letter-spacing:-.02em;margin:2px 0 4px}
+.h-sub{font-size:12.5px;color:var(--muted);font-weight:600;letter-spacing:.02em}
+.h-row{display:flex;align-items:center;justify-content:space-between;gap:10px;margin:2px 0 12px}
+.h-row .h-title{margin:0}
+
+.card{background:var(--surface);border:1px solid var(--line);border-radius:var(--r);box-shadow:0 1px 2px rgba(36,48,31,.05)}
+.l1{display:flex;justify-content:space-between;align-items:baseline;gap:10px}
+.l1 .name{font-weight:700;font-size:15px}
+.l1 .kcal{font-weight:800;font-size:15px;color:var(--amber)}
+.l2{margin-top:3px;font-size:12px;color:var(--muted);font-weight:600}
+.l2 .mp{color:#4a7d9e}.l2 .mf{color:#c07a3a}.l2 .mc{color:#7d5fa8}
+.grow{flex:1;min-width:0}
+.row{display:flex;align-items:center;gap:12px;padding:12px 14px;border-bottom:1px solid var(--line);width:100%;text-align:left;transition:background .15s}
+.row:last-child{border-bottom:none}
+.row:active{background:var(--surface2)}
+
+.btn{display:inline-flex;align-items:center;justify-content:center;gap:8px;font-weight:700;font-size:14.5px;
+  padding:12px 18px;border-radius:11px;background:var(--green);color:#f4f8ee;transition:transform .15s,box-shadow .15s,background .15s;
+  box-shadow:0 2px 8px rgba(44,92,52,.25)}
+.btn:hover{background:var(--green-deep)}
+.btn:active{transform:translateY(1px)}
+.btn svg{width:18px;height:18px}
+.btn.block{display:flex;width:100%}
+.btn.sm{padding:8px 13px;font-size:13px;border-radius:9px}
+.btn.ghost{background:var(--surface);color:var(--ink);border:1px solid var(--line);box-shadow:none}
+.btn.ghost:hover{background:var(--surface2)}
+.btn.amber{background:var(--amber);color:#3a2a10;box-shadow:0 2px 8px rgba(217,142,43,.3)}
+.btn.amber:hover{background:#c57f22}
+.btn.danger{background:var(--red);box-shadow:0 2px 8px rgba(181,69,58,.25)}
+.btn.icon-only{padding:10px 11px}
+.iconbtn{width:36px;height:36px;display:inline-flex;align-items:center;justify-content:center;border-radius:10px;color:var(--muted);transition:background .15s,color .15s;flex:none}
+.iconbtn:hover{background:var(--surface2);color:var(--ink)}
+
+.j-head{display:flex;align-items:center;gap:10px;margin-bottom:6px}
+.navbtn{width:42px;height:42px;display:flex;align-items:center;justify-content:center;border-radius:50%;background:var(--surface);border:1px solid var(--line);color:var(--green-deep);flex:none;transition:transform .12s,background .15s}
+.navbtn:active{transform:scale(.94)}
+.datepill{flex:1;position:relative;display:flex;align-items:center;justify-content:center;gap:8px;background:var(--surface);border:1px solid var(--line);border-radius:999px;padding:10px 16px;font-weight:800;font-size:16px;letter-spacing:-.01em;cursor:pointer}
+.datepill svg{width:17px;height:17px;color:var(--amber)}
+.datepill input{position:absolute;inset:0;opacity:0;cursor:pointer}
+.j-sub{display:flex;justify-content:space-between;align-items:center;gap:8px;margin:8px 0 14px}
+.doccard{position:relative;margin-bottom:12px;overflow:hidden}
+.doccard .dotmenu{position:absolute;right:6px;top:6px;z-index:2}
+.doccard .row{padding-right:44px}
+
+.totalsbar{
+  position:fixed;bottom:calc(var(--tab-h) + 10px);left:50%;transform:translateX(-50%);
+  width:min(480px,calc(100% - 32px));z-index:25;background:var(--ink);color:#f2ede0;border-radius:14px;
+  padding:9px 14px;display:flex;align-items:center;justify-content:center;flex-wrap:wrap;gap:2px 12px;
+  box-shadow:0 8px 24px rgba(36,48,31,.3);animation:fadeUp .3s ease both}
+.totalsbar .t-label{font-size:10px;font-weight:800;letter-spacing:.1em;text-transform:uppercase;color:#a9b893}
+.totalsbar .t-kcal{font-size:16px;font-weight:800;color:#f2c26b}
+.totalsbar .t-macro{font-size:11px;color:#cfd8bf;font-weight:600}
+
+.rep-headbtns{display:flex;align-items:center;gap:8px}
+.rep-headbtns .btn#repFilterBtn svg{transition:transform .25s}
+.rep-headbtns .btn#repFilterBtn.active svg{transform:rotate(90deg)}
+.rep-filters{background:var(--surface);border:1px solid var(--line);border-radius:var(--r);padding:12px;margin-bottom:12px;display:flex;flex-direction:column;gap:12px}
+.rep-period{display:flex;align-items:center;flex-wrap:nowrap;gap:4px}
+.rep-period .rt-label{font-size:11px;color:var(--muted);font-weight:700}
+.rep-period input[type=date]{border:1px solid var(--line);border-radius:8px;padding:6px 4px;font-size:13px;background:var(--surface2);font-variant-numeric:tabular-nums;width:100%;max-width:105px;flex:1;text-align:center}
+.rep-checks{display:flex;flex-wrap:wrap;gap:7px}
+.rep-checks label{display:inline-flex;align-items:center;gap:6px;font-size:12.5px;font-weight:600;background:var(--bg);border:1px solid var(--line);border-radius:999px;padding:6px 12px;cursor:pointer;white-space:nowrap;transition:border-color .15s,background .15s}
+.rep-checks label:hover{border-color:var(--green)}
+.rep-checks input{accent-color:var(--green)}
+.report-wrap{background:var(--surface);border:1px solid var(--line);border-radius:var(--r);overflow:auto;height:calc(100dvh - var(--tab-h) - 190px);min-height:280px;position:relative}
+.tbl{width:100%;border-collapse:collapse;font-size:13px}
+.tbl th{position:sticky;top:0;z-index:6;background:var(--green-deep);color:#eef4e8;font-size:10.5px;font-weight:800;letter-spacing:.03em;text-transform:uppercase;padding:7px 6px;text-align:right;white-space:nowrap}
+.tbl th:first-child{text-align:left}
+.tbl td{padding:6px 6px;border-bottom:1px solid var(--line);text-align:right;white-space:nowrap}
+.tbl td:first-child{text-align:left;font-weight:600;white-space:normal;overflow-wrap:anywhere;min-width:12ch}
+.tbl .ck{color:var(--amber);font-weight:800}
+.tbl tr.sec td{background:var(--green-soft);color:var(--green-deep);font-weight:800;font-size:11.5px;letter-spacing:.07em;text-transform:uppercase;text-align:left;padding:7px 6px}
+.tbl tr.dhead td{background:var(--amber-soft);color:#8a5a17;font-weight:800;font-size:11px;letter-spacing:.05em;text-align:left;padding:6px}
+.tbl tr.dtotal td{background:#f3edd9;font-weight:800;color:var(--green-deep)}
+.tbl tr.daytotal td{background:#e7dfc4;font-weight:800;color:#6b4d12}
+.tbl tr.avg td{background:var(--amber-soft);font-weight:800}
+@media (orientation:portrait){
+  .tbl th:nth-child(2),.tbl td:nth-child(2){display:none}
+}
+@media (orientation:landscape){
+  #app{max-width:min(720px,100%)}
+  .report-wrap{height:calc(100dvh - var(--tab-h) - 150px)}
+  body.no-tabbar #tabbar{display:none}
+  body.no-tabbar main{padding-bottom:16px}
+  body.no-tabbar .report-wrap{height:calc(100dvh - 150px)}
+}
+
+#screen-editor{position:fixed;inset:0;z-index:60;background:var(--bg);display:none;flex-direction:column}
+#screen-editor.active{display:flex;animation:fadeUp .25s ease both}
+.ed-head{display:flex;align-items:center;gap:8px;padding:14px 16px;background:var(--surface);border-bottom:1px solid var(--line)}
+.ed-head .t{flex:1;font-weight:800;font-size:17px;letter-spacing:-.01em}
+.ed-fields{display:grid;grid-template-columns:1.4fr 1fr 1.2fr;gap:8px;padding:14px 16px 4px}
+.ed-fields label{font-size:10.5px;font-weight:800;color:var(--muted);text-transform:uppercase;letter-spacing:.04em;display:flex;flex-direction:column;gap:4px}
+.ed-fields input,.ed-fields select{padding:10px;border:1px solid var(--line);border-radius:9px;background:var(--surface);font-size:14px;width:100%}
+.ed-fields input:focus,.ed-fields select:focus{outline:none;border-color:var(--green)}
+#edRows{flex:1;overflow-y:auto;padding:12px 16px}
+.ed-total{display:flex;justify-content:space-between;align-items:center;padding:10px 16px;background:var(--surface);border-top:1px solid var(--line);font-weight:800}
+.ed-total #edTotal{color:var(--amber);font-size:16px}
+.ed-foot{padding:10px 16px calc(10px + env(safe-area-inset-bottom))}
+
+.f-grid{display:grid;grid-template-columns:repeat(6,1fr);gap:8px}
+.f-grid .f-name{grid-column:1/5}
+.f-grid .f-p{grid-column:5/6}
+.f-grid .f-f{grid-column:6/7}
+.f-grid .f-btn{grid-column:1/3;align-self:stretch;margin-top:0;padding:0 8px;font-size:14px}
+.f-grid .f-kcal{grid-column:3/5}
+.f-grid .f-c{grid-column:5/7}
+.f-grid .w-date{grid-column:3/5}
+.f-grid .w-val{grid-column:5/7}
+.f-grid label{font-size:10.5px;font-weight:800;color:var(--muted);text-transform:uppercase;letter-spacing:.04em;display:flex;flex-direction:column;gap:4px}
+.f-grid input{padding:10px;border:1px solid var(--line);border-radius:9px;background:var(--surface2);font-size:14px;font-variant-numeric:tabular-nums;width:100%}
+.f-grid input:focus{outline:none;border-color:var(--green)}
+.f-grid .f-kcal input{background:var(--surface);border-style:dashed;color:var(--amber);font-weight:800;text-align:center}
+
+.searchwrap{position:relative;display:flex;align-items:center;margin-bottom:12px}
+.searchwrap svg{position:absolute;left:12px;width:17px;height:17px;color:var(--muted)}
+.searchwrap input{width:100%;padding:11px 12px 11px 38px;border:1px solid var(--line);border-radius:999px;background:var(--surface);font-size:14px}
+.searchwrap input:focus{outline:none;border-color:var(--green)}
+
+#tabbar{position:fixed;bottom:0;left:50%;transform:translateX(-50%);width:min(520px,100% - 20px);z-index:35;display:grid;grid-template-columns:repeat(5,1fr);
+  background:var(--surface);border:1px solid var(--line);border-bottom:none;border-radius:18px 18px 0 0;
+  padding:6px 4px calc(6px + env(safe-area-inset-bottom));box-shadow:0 -4px 20px rgba(36,48,31,.08)}
+.tab{display:flex;flex-direction:column;align-items:center;gap:3px;padding:6px 2px;border-radius:12px;color:var(--muted);font-size:9.5px;font-weight:700;letter-spacing:.01em;transition:color .15s,background .15s}
+.tab svg{width:21px;height:21px}
+.tab.active{color:var(--green-deep);background:var(--green-soft)}
+
+.svc-row{display:flex;align-items:center;gap:14px;padding:13px 14px;border-bottom:1px solid var(--line);width:100%;text-align:left}
+.svc-row:last-child{border-bottom:none}
+.svc-row .s-ico{width:38px;height:38px;flex:none;border-radius:10px;background:var(--green-soft);color:var(--green-deep);display:flex;align-items:center;justify-content:center}
+.svc-row .s-ico.warn{background:var(--amber-soft);color:var(--amber)}
+.svc-row .s-t{font-weight:700;font-size:14.5px}
+.svc-row .s-d{font-size:12px;color:var(--muted)}
+.stat-grid{display:grid;gap:2px}
+.stat-grid .st{display:flex;justify-content:space-between;gap:10px;padding:11px 14px;border-bottom:1px solid var(--line);font-size:13.5px}
+.stat-grid .st:last-child{border-bottom:none}
+.stat-grid .st b{font-weight:800}
+.stat-grid .st span{color:var(--muted)}
+.meal-chip{display:flex;align-items:center;gap:10px;padding:11px 14px;border-bottom:1px solid var(--line);font-weight:700}
+.meal-chip:last-child{border-bottom:none}
+.meal-chip .idx{width:26px;height:26px;border-radius:8px;background:var(--green-soft);color:var(--green-deep);font-size:12px;font-weight:800;display:flex;align-items:center;justify-content:center}
+
+#modals .overlay{position:fixed;inset:0;z-index:70;background:rgba(36,48,31,.45);display:flex;align-items:flex-end;justify-content:center;animation:fadein .18s ease}
+@keyframes fadein{from{opacity:0}}
+#modals .sheet{width:min(520px,100%);max-height:88dvh;overflow-y:auto;background:var(--surface);border-radius:18px 18px 0 0;padding:16px 16px calc(16px + env(safe-area-inset-bottom));animation:slideup .28s cubic-bezier(.2,1,.3,1)}
+@keyframes slideup{from{transform:translateY(40px);opacity:.4}}
+#modals .sheet.raised{margin-bottom:140px}
+#modals .overlay.center{align-items:center;padding:20px}
+#modals .sheet.center{border-radius:18px;max-height:80dvh}
+.sh-head{display:flex;align-items:center;gap:8px;margin-bottom:12px}
+.sh-head .t{flex:1;font-weight:800;font-size:16.5px;letter-spacing:-.01em}
+.picker-row{position:relative}
+.picker-row .p-edit{position:absolute;right:8px;top:50%;transform:translateY(-50%)}
+#toast{position:fixed;top:14px;left:50%;transform:translateX(-50%);z-index:90;pointer-events:none;display:flex;flex-direction:column;gap:8px;align-items:center;width:min(440px,calc(100% - 32px))}
+#toast .t-item{background:var(--ink);color:#f2ede0;font-size:13px;font-weight:600;padding:10px 16px;border-radius:999px;box-shadow:0 8px 24px rgba(36,48,31,.3);animation:fadeUp .25s ease both;max-width:100%;text-align:center}
+#toast .t-item.err{background:var(--red)}
+#toast .t-item.ok{background:var(--green-deep)}
+#savePill{position:fixed;top:12px;right:12px;z-index:45;pointer-events:none;display:flex;align-items:center;gap:7px;background:var(--ink);color:#f2ede0;font-size:12px;font-weight:700;padding:7px 13px;border-radius:999px;box-shadow:0 6px 18px rgba(36,48,31,.3);opacity:0;transform:translateY(-8px);transition:opacity .25s,transform .25s}
+#savePill.show{opacity:1;transform:none}
+#savePill .sp-dot{width:7px;height:7px;border-radius:50%;background:#7fd694;flex:none}
+.empty{padding:36px 18px;text-align:center;color:var(--muted)}
+.empty .e-ico{width:52px;height:52px;margin:0 auto 12px;color:#b9c4a4}
+.empty .e-ico svg{width:100%;height:100%}
+.empty h3{color:var(--ink);font-size:16.5px;margin-bottom:5px}
+.empty p{font-size:13.5px;margin-bottom:16px}
+
+#d-splash{position:fixed;inset:0;z-index:100;background:var(--bg);display:flex;flex-direction:column;align-items:center;justify-content:center;gap:6px;transition:opacity .5s,visibility .5s}
+#d-splash.off{opacity:0;visibility:hidden}
+#d-splash .s-logo{font-size:42px;font-weight:800;letter-spacing:-.03em;color:var(--ink)}
+#d-splash .s-logo b{color:var(--amber)}
+#d-splash .s-sub{font-size:12px;font-weight:700;letter-spacing:.28em;text-transform:uppercase;color:var(--muted)}
+#d-splash .s-ver{margin-top:14px;font-size:12px;font-weight:800;color:var(--green-deep);border:1.5px solid var(--green-deep);border-radius:999px;padding:4px 14px;letter-spacing:.08em}
+#d-splash .s-cursor{margin-top:22px;width:9px;height:22px;background:var(--amber);animation:blink 1s steps(1) infinite}
+@keyframes blink{50%{opacity:0}}
+</style>
+</head>
+<body>
+
+<div id="d-splash">
+  <div class="s-logo">DIETA<b>.</b></div>
+  <div class="s-sub">журнал питания</div>
+  <div class="s-ver">v 1.0.24</div>
+  <div class="s-cursor"></div>
+</div>
+
+<svg width="0" height="0" style="position:absolute" aria-hidden="true">
+  <defs>
+    <symbol id="i-journal" viewBox="0 0 24 24"><path d="M4 5a2 2 0 0 1 2-2h12a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2z"/><path d="M8 3v18M12 8h4M12 12h4"/></symbol>
+    <symbol id="i-report" viewBox="0 0 24 24"><path d="M4 20V10M10 20V4M16 20v-7M21 20H3"/></symbol>
+    <symbol id="i-basket" viewBox="0 0 24 24"><path d="M5 8h14l-1.5 11a2 2 0 0 1-2 1.8h-7A2 2 0 0 1 6.5 19z"/><path d="M8 8V6a4 4 0 0 1 8 0v2"/></symbol>
+    <symbol id="i-scale" viewBox="0 0 24 24"><path d="M12 3v3M6 21h12M12 6l-6 12h12z"/><circle cx="12" cy="6" r="1.4"/></symbol>
+    <symbol id="i-gear" viewBox="0 0 24 24"><circle cx="12" cy="12" r="3.2"/><path d="M12 2.5v3M12 18.5v3M2.5 12h3M18.5 12h3M5 5l2 2M17 17l2 2M19 5l-2 2M7 17l-2 2"/></symbol>
+    <symbol id="i-plus" viewBox="0 0 24 24"><path d="M12 5v14M5 12h14"/></symbol>
+    <symbol id="i-x" viewBox="0 0 24 24"><path d="m6 6 12 12M18 6 6 18"/></symbol>
+    <symbol id="i-chevl" viewBox="0 0 24 24"><path d="m14 6-6 6 6 6"/></symbol>
+    <symbol id="i-chevr" viewBox="0 0 24 24"><path d="m10 6 6 6-6 6"/></symbol>
+    <symbol id="i-cal" viewBox="0 0 24 24"><rect x="3.5" y="5" width="17" height="16" rx="2"/><path d="M3.5 10h17M8 3v4M16 3v4"/></symbol>
+    <symbol id="i-copy" viewBox="0 0 24 24"><rect x="9" y="9" width="11" height="11" rx="2"/><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/></symbol>
+    <symbol id="i-trash" viewBox="0 0 24 24"><path d="M4 7h16M9 7V5a1 1 0 0 1 1-1h4a1 1 0 0 1 1 1v2M6.5 7l1 13h9l1-13M10 11v6M14 11v6"/></symbol>
+    <symbol id="i-pen" viewBox="0 0 24 24"><path d="M4 20h4L19.5 8.5a2.1 2.1 0 0 0-3-3L5 17z"/><path d="m14 7 3 3"/></symbol>
+    <symbol id="i-dots" viewBox="0 0 24 24"><circle cx="12" cy="5.5" r="1.4" fill="currentColor" stroke="none"/><circle cx="12" cy="12" r="1.4" fill="currentColor" stroke="none"/><circle cx="12" cy="18.5" r="1.4" fill="currentColor" stroke="none"/></symbol>
+    <symbol id="i-swap" viewBox="0 0 24 24"><path d="M7 8h11l-3-3M17 16H6l3 3"/></symbol>
+    <symbol id="i-up" viewBox="0 0 24 24"><path d="M12 19V5M6 11l6-6 6 6"/></symbol>
+    <symbol id="i-down" viewBox="0 0 24 24"><path d="M12 5v14M6 13l6 6 6-6"/></symbol>
+    <symbol id="i-db" viewBox="0 0 24 24"><ellipse cx="12" cy="5.5" rx="8" ry="3"/><path d="M4 5.5v13c0 1.7 3.6 3 8 3s8-1.3 8-3v-13M4 12c0 1.7 3.6 3 8 3s8-1.3 8-3"/></symbol>
+    <symbol id="i-home" viewBox="0 0 24 24"><path d="m4 11 8-7 8 7v9a1 1 0 0 1-1 1h-5v-6h-4v6H5a1 1 0 0 1-1-1z"/></symbol>
+  </defs>
+</svg>
+
+<div id="app">
+<main>
+
+  <section class="screen active" id="screen-journal">
+    <h1 class="h-title">Приёмы пищи</h1>
+    <div class="j-head">
+      <button class="navbtn" id="jPrev" aria-label="Предыдущий день"><svg><use href="#i-chevl"/></svg></button>
+      <div class="datepill">
+        <svg><use href="#i-cal"/></svg>
+        <span id="jDateLabel">—</span>
+        <input type="date" id="jDateInput" aria-label="Выбор даты">
+      </div>
+      <button class="navbtn" id="jNext" aria-label="Следующий день"><svg><use href="#i-chevr"/></svg></button>
+    </div>
+    <div class="j-sub">
+      <button class="btn ghost sm" id="jToday" style="display:none">Сегодня</button>
+      <span class="h-sub" id="jWeekday"></span>
+      <button class="btn sm" id="jAdd"><svg><use href="#i-plus"/></svg>Документ</button>
+    </div>
+    <div id="jList"></div>
+  </section>
+
+  <section class="screen" id="screen-report">
+    <div class="h-row">
+      <h1 class="h-title">Отчёт</h1>
+      <div class="rep-headbtns">
+        <button class="btn ghost sm" id="repFilterBtn" style="white-space:nowrap"><svg style="width:16px;height:16px"><use href="#i-chevr"/></svg>Фильтры</button>
+        <button class="btn amber sm icon-only" id="repCopy" title="Копировать отчёт" aria-label="Копировать отчёт"><svg><use href="#i-copy"/></svg></button>
+        <button class="btn ghost sm icon-only" id="repHome" title="Домой" aria-label="Домой"><svg><use href="#i-home"/></svg></button>
+      </div>
+    </div>
+    <div class="rep-filters" id="repFilters" style="display:none">
+      <div class="rep-period">
+        <span class="rt-label">с</span>
+        <input type="date" id="repFrom">
+        <span class="rt-label">по</span>
+        <input type="date" id="repTo">
+      </div>
+      <div class="rep-checks">
+        <label><input type="checkbox" id="fProdDetail" checked>Продукты (в документах ПП)</label>
+        <label><input type="checkbox" id="fProducts" checked>Итог по продуктам</label>
+        <label><input type="checkbox" id="fDocs" checked>По документам</label>
+        <label><input type="checkbox" id="fDays" checked>По дням</label>
+        <label><input type="checkbox" id="fTotal" checked>Общие итоги</label>
+      </div>
+    </div>
+    <div class="report-wrap" id="repWrap">
+      <table class="tbl">
+        <thead><tr><th>Продукт</th><th>Кол-во</th><th>Ккал</th><th>Белки</th><th>Жиры</th><th>Углев</th></tr></thead>
+        <tbody id="repBody"></tbody>
+      </table>
+    </div>
+  </section>
+
+  <section class="screen" id="screen-products">
+    <div class="h-row">
+      <h1 class="h-title">Продукты</h1>
+      <button class="btn sm" id="pAdd"><svg><use href="#i-plus"/></svg>Продукт</button>
+    </div>
+    <div class="searchwrap"><svg><use href="#i-basket"/></svg><input id="pSearch" placeholder="Поиск по наименованию…" autocomplete="off"></div>
+    <div class="card" id="pList"></div>
+    <p class="h-sub" id="pCount" style="margin-top:10px"></p>
+  </section>
+
+  <section class="screen" id="screen-weight">
+    <h1 class="h-title">Мой вес</h1>
+    <div style="margin-bottom:12px"><button class="btn block" id="wAdd"><svg><use href="#i-plus"/></svg>Добавить запись</button></div>
+    <div class="card" id="wList"></div>
+  </section>
+
+  <section class="screen" id="screen-service">
+    <h1 class="h-title">Сервис</h1>
+    <div id="svcArea"></div>
+  </section>
+
+</main>
+</div>
+
+<section id="screen-editor">
+  <div class="ed-head">
+    <span class="t" id="edTitle">Документ</span>
+    <button class="iconbtn" id="edClose" aria-label="Закрыть"><svg><use href="#i-x"/></svg></button>
+  </div>
+  <div class="ed-fields">
+    <label>Дата<input type="date" id="edDate"></label>
+    <label>Время<input type="time" id="edTime"></label>
+    <label>Вид<select id="edMeal"></select></label>
+  </div>
+  <div id="edRows"></div>
+  <div class="ed-total"><span>Итог документа</span><span id="edTotal" class="num">0,0 ккал</span></div>
+  <div class="ed-foot" style="display:flex;gap:10px">
+    <button class="btn ghost" id="edAddRow" style="flex:1"><svg><use href="#i-plus"/></svg>Продукт</button>
+    <button class="btn" id="edSave" style="flex:1.4">Сохранить</button>
+  </div>
+</section>
+
+<nav id="tabbar">
+  <button class="tab active" data-tab="journal"><svg><use href="#i-journal"/></svg><span>Приёмы пищи</span></button>
+  <button class="tab" data-tab="report"><svg><use href="#i-report"/></svg><span>Отчёт</span></button>
+  <button class="tab" data-tab="products"><svg><use href="#i-basket"/></svg><span>Продукты</span></button>
+  <button class="tab" data-tab="weight"><svg><use href="#i-scale"/></svg><span>Мой вес</span></button>
+  <button class="tab" data-tab="service"><svg><use href="#i-gear"/></svg><span>Сервис</span></button>
+</nav>
+
+<div id="modals"></div>
+<div id="toast"></div>
+<div id="savePill"><span class="sp-dot"></span><span id="savePillText">Сохранено</span></div>
+<input type="file" id="fileInput" accept=".json,application/json" hidden>
+
+<script>
+'use strict';
+if (window.__dietaBoot !== 'готово') window.__dietaBoot = 'скрипт разобран, исполняется';
+window.__dietaErrors = window.__dietaErrors || [];
+window.__dietaScriptInfo = window.__dietaScriptInfo || function(){
+  var out=[]; var ss=document.querySelectorAll('script');
+  for(var i=0;i<ss.length;i++){ if(ss[i].src) continue; out.push(ss[i].textContent.length); }
+  return out.join(', ');
+};
+(function () {
+'use strict';
+var APP_VERSION = '1.0.24';
+var CLAIMED = window.__DIETA_CLAIMED_VERSION;
+function verGT(a,b){ var pa=a.split('.').map(Number), pb=b.split('.').map(Number);
+  for(var i=0;i<3;i++){ if((pa[i]||0)>(pb[i]||0)) return true; if((pa[i]||0)<(pb[i]||0)) return false; } return false; }
+if(!CLAIMED || verGT(APP_VERSION, CLAIMED)) window.__DIETA_CLAIMED_VERSION = APP_VERSION;
+
+const MEALS = ['Завтрак','Обед','Полдник','Ужин'];
+const $ = (s) => document.querySelector(s);
+const $$ = (s) => Array.from(document.querySelectorAll(s));
+
+function round1(x){ return Math.round((+x||0)*10)/10; }
+function fmt1(x){ return round1(x).toFixed(1).replace('.', ','); }
+function pad2(n){ return String(n).padStart(2,'0'); }
+function todayStr(d){ d = d||new Date(); return d.getFullYear()+'-'+pad2(d.getMonth()+1)+'-'+pad2(d.getDate()); }
+function nowHM(){ const d=new Date(); return pad2(d.getHours())+':'+pad2(d.getMinutes()); }
+function dmy(iso){ if(!iso) return '—'; const p=iso.split('-'); return p[2]+'.'+p[1]+'.'+p[0]; }
+function weekdayShort(iso){ const d=new Date(iso+'T12:00:00'); return ['вс','пн','вт','ср','чт','пт','сб'][d.getDay()]; }
+function normName(s){ return String(s||'').trim().replace(/\s+/g,' ').toLowerCase(); }
+function uid(){ return Date.now().toString(36)+Math.random().toString(36).slice(2,7); }
+function esc(s){ return String(s==null?'':s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;').replace(/'/g,'&#39;'); }
+function kcal100(p){ return round1(4*(+p.p||0)+9*(+p.f||0)+4*(+p.c||0)); }
+
+const DB = {
+  db:null, useLS:false,
+  open(){
+    return new Promise((res, rej)=>{
+      if(!window.indexedDB){ rej(new Error('no indexedDB')); return; }
+      const rq = indexedDB.open('dieta', 2);
+      rq.onupgradeneeded = ()=>{ const d=rq.result; ['products','docs','weights','meta'].forEach(s=>{ if(!d.objectStoreNames.contains(s)) d.createObjectStore(s); }); };
+      rq.onsuccess = ()=>{ this.db=rq.result; res(); };
+      rq.onerror = ()=>rej(rq.error||new Error('open fail'));
+    });
+  },
+  _lsGet(store,k){ try{ return JSON.parse(localStorage.getItem('dieta:'+store+':'+k)||'null'); }catch(e){ return null; } },
+  _lsPut(store,k,v){ try{ localStorage.setItem('dieta:'+store+':'+k, JSON.stringify(v)); }catch(e){} },
+  get(store, key){
+    if(this.useLS) return Promise.resolve(this._lsGet(store,key));
+    const s=this.db.transaction(store,'readonly').objectStore(store);
+    if(s.keyPath){
+      return new Promise((res,rej)=>{ const rq=s.getAll(); rq.onsuccess=()=>res(normalizeStore(store, rq.result||[])); rq.onerror=()=>rej(rq.error); });
+    }
+    return new Promise((res,rej)=>{ const rq=s.get(key); rq.onsuccess=()=>res(rq.result); rq.onerror=()=>rej(rq.error); });
+  },
+  put(store, key, val){
+    if(this.useLS){ this._lsPut(store,key,val); return Promise.resolve(); }
+    const s=this.db.transaction(store,'readwrite').objectStore(store);
+    if(s.keyPath){
+      return new Promise((res,rej)=>{
+        const t=s.transaction; s.clear();
+        (Array.isArray(val)?val:[val]).forEach(r=>{ const rec=Object.assign({}, r); if(rec[s.keyPath]==null) rec[s.keyPath]=rec.id||key; s.put(rec); });
+        t.oncomplete=()=>res(); t.onerror=()=>rej(t.error); t.onabort=()=>rej(t.error||new Error('abort'));
+      });
+    }
+    return new Promise((res,rej)=>{ const rq=s.put(val,key); rq.onsuccess=()=>res(); rq.onerror=()=>rej(rq.error); });
+  }
+};
+function normalizeStore(store, records){
+  if(store==='meta'){
+    const r=records[0]; if(!r) return null;
+    const out={};
+    ['lastLaunch','lastBackup','lastChange','lastSave'].forEach(f=>{ if(r[f]!==undefined) out[f]=r[f]; });
+    return out;
+  }
+  return records.map(r=>{
+    const rec=Object.assign({}, r);
+    if(rec.id==null) rec.id=uid();
+    if(store==='docs' && Array.isArray(rec.rows)){
+      rec.rows=rec.rows.map(x=>{ const y=Object.assign({},x); if(y.k===undefined && y.kcal!==undefined) y.k=y.kcal; return y; });
+    }
+    return rec;
+  });
+}
+
+const state = {
+  products: [], docs: [], weights: [],
+  meta: { lastLaunch:null, lastBackup:null, lastChange:null, lastSave:null },
+  journalDate: todayStr(),
+  editDoc: null
+};
+async function writeAll(){
+  await Promise.all([
+    DB.put('products','all',state.products),
+    DB.put('docs','all',state.docs),
+    DB.put('weights','all',state.weights),
+    DB.put('meta','all',state.meta)
+  ]);
+}
+let saveFlashT=null;
+async function persist(){
+  const now=nowHM();
+  state.meta.lastSave=now;
+  state.meta.lastChange=todayStr();
+  try{ await writeAll(); }catch(e){ console.warn('persist error', e); }
+  const pill=document.getElementById('savePill');
+  if(pill){
+    document.getElementById('savePillText').textContent='Сохранено '+now;
+    pill.classList.remove('show'); void pill.offsetWidth; pill.classList.add('show');
+    clearTimeout(saveFlashT);
+    saveFlashT=setTimeout(()=>pill.classList.remove('show'),1600);
+  }
+}
+function toast(msg, kind){
+  const box=$('#toast');
+  const el=document.createElement('div');
+  el.className='t-item'+(kind?' '+kind:'');
+  el.textContent=msg;
+  box.appendChild(el);
+  setTimeout(()=>{ el.style.opacity='0'; el.style.transition='opacity .3s'; },2100);
+  setTimeout(()=>el.remove(),2500);
+}
+
+function openSheet(html, opts){
+  opts=opts||{};
+  const box=$('#modals');
+  const ov=document.createElement('div');
+  ov.className='overlay'+(opts.center?' center':'');
+  ov.innerHTML='<div class="sheet'+(opts.center?' center':'')+(opts.cls?' '+opts.cls:'')+'" role="dialog" aria-modal="true">'+html+'</div>';
+  box.appendChild(ov);
+  const close=()=>{ ov.style.opacity='0'; ov.style.transition='opacity .18s'; setTimeout(()=>ov.remove(),190); };
+  ov.addEventListener('click',(e)=>{ if(e.target===ov && !opts.persistent) close(); });
+  return { el:ov.querySelector('.sheet'), ov, close };
+}
+function confirmDialog(title, text, onOk, opts){
+  opts=opts||{};
+  const m=openSheet(
+    '<div class="sh-head"><span class="t">'+esc(title)+'</span></div>'+
+    '<p style="font-size:14px;line-height:1.5;margin-bottom:16px">'+text+'</p>'+
+    '<div style="display:flex;gap:10px">'+
+    '<button class="btn ghost" data-no style="flex:1">'+esc(opts.no||'Нет')+'</button>'+
+    '<button class="btn '+(opts.danger?'danger':'')+'" data-ok style="flex:1">'+esc(opts.ok||'Да')+'</button>'+
+    '</div>', {center:true, persistent:true}
+  );
+  const no=m.el.querySelector('[data-no]'), ok=m.el.querySelector('[data-ok]');
+  no.onclick=()=>m.close();
+  ok.onclick=()=>{ m.close(); onOk(); };
+  setTimeout(()=>no.focus(),60);
+  return m;
+}
+function infoDialog(title, html){
+  const m=openSheet('<div class="sh-head"><span class="t">'+esc(title)+'</span><button class="iconbtn" data-x><svg><use href="#i-x"/></svg></button></div><div style="font-size:14px;line-height:1.55">'+html+'</div>');
+  m.el.querySelector('[data-x]').onclick=m.close;
+  return m;
+}
+
+function productForm(prod, onDone){
+  const isNew=!prod;
+  prod=prod||{name:'',p:'',f:'',c:''};
+  const m=openSheet(
+    '<div style="position:relative">'+
+    '<button class="iconbtn" data-x style="position:absolute;top:-4px;right:-6px" aria-label="Закрыть"><svg><use href="#i-x"/></svg></button>'+
+    '<div class="f-grid">'+
+      '<label class="f-name">Наименование<input id="fName" maxlength="25" enterkeyhint="next" value="'+esc(prod.name)+'" placeholder="до 25 символов"></label>'+
+      '<label class="f-p">Белки<input id="fP" type="number" step="0.1" min="0" enterkeyhint="next" value="'+esc(prod.p)+'"></label>'+
+      '<label class="f-f">Жиры<input id="fF" type="number" step="0.1" min="0" enterkeyhint="next" value="'+esc(prod.f)+'"></label>'+
+      '<button class="btn f-btn" data-ok>Сохранить</button>'+
+      '<label class="f-kcal">Ккал<input id="fKcal" class="num" readonly tabindex="-1" value="0,0" aria-label="Калорийность"></label>'+
+      '<label class="f-c">Углеводы<input id="fC" type="number" step="0.1" min="0" enterkeyhint="done" value="'+esc(prod.c)+'"></label>'+
+    '</div>'+
+    '</div>',
+    { raised: window.innerWidth<=640 }
+  );
+  const inp=(s)=>m.el.querySelector(s);
+  const recalc=()=>{ inp('#fKcal').value=fmt1(kcal100({p:inp('#fP').value,f:inp('#fF').value,c:inp('#fC').value})); };
+  ['#fP','#fF','#fC'].forEach(s=>inp(s).addEventListener('input',recalc));
+  recalc();
+  const okBtn=m.el.querySelector('[data-ok]');
+  const seq=['#fName','#fP','#fF','#fC'];
+  seq.forEach((s,i)=>{
+    inp(s).addEventListener('keydown',(e)=>{
+      if(e.key!=='Enter') return;
+      e.preventDefault();
+      if(i<seq.length-1) inp(seq[i+1]).focus();
+      else { inp(s).blur(); okBtn.focus(); }
+    });
+  });
+  m.el.querySelector('[data-x]').onclick=m.close;
+  okBtn.onclick=async()=>{
+    const name=inp('#fName').value.trim();
+    if(!name){ toast('Введите наименование','err'); inp('#fName').focus(); return; }
+    if(name.length>25){ toast('Наименование длиннее 25 символов','err'); return; }
+    const nn=normName(name);
+    const dup=state.products.find(p=>normName(p.name)===nn && (!prod.id || p.id!==prod.id));
+    if(dup){ toast('Такой продукт уже есть: '+dup.name,'err'); return; }
+    const rec={ id: prod.id||uid(), name:name, p:round1(inp('#fP').value), f:round1(inp('#fF').value), c:round1(inp('#fC').value) };
+    rec.k=kcal100(rec);
+    if(isNew) state.products.push(rec);
+    else { const i=state.products.findIndex(p=>p.id===prod.id); state.products[i]=rec; }
+    state.products.sort((a,b)=>a.name.localeCompare(b.name,'ru'));
+    await persist();
+    m.close();
+    if(onDone) onDone();
+    toast(isNew?'Продукт добавлен':'Продукт обновлён','ok');
+  };
+  setTimeout(()=>inp('#fName').focus(),80);
+}
+function deleteProduct(p){
+  const used=state.docs.some(d=>d.rows.some(r=>r.pid===p.id));
+  if(used){
+    infoDialog('Нельзя удалить', 'Продукт <b>'+esc(p.name)+'</b> используется в документах приёма пищи. Сначала удалите связанные документы.');
+    return;
+  }
+  confirmDialog('Удалить продукт','Удалить <b>'+esc(p.name)+'</b> из справочника?', async()=>{
+    state.products=state.products.filter(x=>x.id!==p.id);
+    await persist(); renderProducts();
+    toast('Продукт удалён','ok');
+  },{danger:true, ok:'Удалить'});
+}
+function renderProducts(){
+  const q=normName($('#pSearch').value);
+  const items=state.products.filter(p=>!q||normName(p.name).includes(q));
+  const box=$('#pList');
+  if(!items.length){
+    box.innerHTML='<div class="empty"><div class="e-ico"><svg><use href="#i-basket"/></svg></div>'+
+      '<h3>'+(q?'Ничего не найдено':'Справочник пуст')+'</h3><p>'+(q?'Попробуйте другой запрос':'Добавьте первый продукт')+'</p></div>';
+  } else {
+    box.innerHTML=items.map((p,i)=>
+      '<div style="position:relative;border-bottom:1px solid var(--line)" class="row-anim" style="animation-delay:'+Math.min(i*30,200)+'ms">'+
+      '<div class="row" style="padding-right:88px"><div class="grow">'+
+      '<div class="l1"><span class="name">'+esc(p.name)+'</span><span class="kcal num">'+fmt1(kcal100(p))+'</span></div>'+
+      '<div class="l2 num"><b class="mp">Б '+fmt1(p.p)+'</b>&nbsp;&nbsp;<b class="mf">Ж '+fmt1(p.f)+'</b>&nbsp;&nbsp;<b class="mc">У '+fmt1(p.c)+'</b>&nbsp;&nbsp;· на 100 г</div></div></div>'+
+      '<button class="iconbtn" data-edit="'+p.id+'" style="position:absolute;right:44px;top:50%;transform:translateY(-50%)" aria-label="Изменить"><svg><use href="#i-pen"/></svg></button>'+
+      '<button class="iconbtn" data-del="'+p.id+'" style="position:absolute;right:6px;top:50%;transform:translateY(-50%);color:var(--red)" aria-label="Удалить"><svg><use href="#i-trash"/></svg></button>'+
+      '</div>').join('');
+  }
+  $('#pCount').textContent=state.products.length
+    ? 'В справочнике: '+state.products.length+' поз.'+(q?' · найдено '+items.length:'') : '';
+  box.querySelectorAll('[data-edit]').forEach(b=>b.onclick=()=>productForm(state.products.find(x=>x.id===b.dataset.edit), renderProducts));
+  box.querySelectorAll('[data-del]').forEach(b=>b.onclick=()=>deleteProduct(state.products.find(x=>x.id===b.dataset.del)));
+}
+
+function weightForm(rec){
+  const isNew=!rec;
+  rec=rec||{date:todayStr(),w:''};
+  const m=openSheet(
+    '<div class="sh-head"><span class="t">'+(isNew?'Новая запись':'Изменить запись')+'</span><button class="iconbtn" data-x><svg><use href="#i-x"/></svg></button></div>'+
+    '<div class="f-grid">'+
+    '<button class="btn f-btn" data-ok>Сохранить</button>'+
+    '<label class="w-date">Дата<input type="date" id="wDate" value="'+esc(rec.date)+'"></label>'+
+    '<label class="w-val">Вес, кг<input id="wVal" type="number" step="0.1" min="0" value="'+esc(rec.w)+'" placeholder="72,5"></label>'+
+    '</div>',
+    { raised: window.innerWidth<=640 }
+  );
+  m.el.querySelector('[data-x]').onclick=m.close;
+  m.el.querySelector('[data-ok]').onclick=async()=>{
+    const date=m.el.querySelector('#wDate').value;
+    const w=round1(m.el.querySelector('#wVal').value);
+    if(!date){ toast('Выберите дату','err'); return; }
+    if(!w||w<=0){ toast('Введите вес','err'); return; }
+    if(isNew) state.weights.push({id:uid(),date,w});
+    else { rec.date=date; rec.w=w; }
+    state.weights.sort((a,b)=>a.date.localeCompare(b.date));
+    await persist(); m.close(); renderWeights();
+    toast('Запись сохранена','ok');
+  };
+}
+function renderWeights(){
+  const box=$('#wList');
+  const items=[...state.weights].sort((a,b)=>a.date.localeCompare(b.date));
+  if(!items.length){
+    box.innerHTML='<div class="empty"><div class="e-ico"><svg><use href="#i-scale"/></svg></div><h3>Записей пока нет</h3><p>Добавьте первое измерение веса</p></div>';
+    return;
+  }
+  box.innerHTML=items.map(r=>
+    '<div style="position:relative;border-bottom:1px solid var(--line)">'+
+    '<div class="row" style="padding-right:88px"><div class="grow">'+
+    '<div class="l1"><span class="name num">'+dmy(r.date)+' <span style="color:var(--muted);font-weight:600;font-size:12px">'+weekdayShort(r.date)+'</span></span>'+
+    '<span class="kcal num" style="color:var(--green-deep)">'+fmt1(r.w)+' кг</span></div></div></div>'+
+    '<button class="iconbtn" data-edit="'+r.id+'" style="position:absolute;right:44px;top:50%;transform:translateY(-50%)" aria-label="Изменить"><svg><use href="#i-pen"/></svg></button>'+
+    '<button class="iconbtn" data-del="'+r.id+'" style="position:absolute;right:6px;top:50%;transform:translateY(-50%);color:var(--red)" aria-label="Удалить"><svg><use href="#i-trash"/></svg></button>'+
+    '</div>').join('');
+  box.querySelectorAll('[data-edit]').forEach(b=>b.onclick=()=>weightForm(state.weights.find(x=>x.id===b.dataset.edit)));
+  box.querySelectorAll('[data-del]').forEach(b=>b.onclick=()=>{
+    confirmDialog('Удалить запись','Удалить запись веса за '+dmy(state.weights.find(x=>x.id===b.dataset.del).date)+'?', async()=>{
+      state.weights=state.weights.filter(x=>x.id!==b.dataset.del);
+      await persist(); renderWeights(); toast('Запись удалена','ok');
+    },{danger:true, ok:'Удалить'});
+  });
+}
+
+function sumRows(rows){
+  const t={kcal:0,p:0,f:0,c:0,qty:0};
+  rows.forEach(r=>{ t.kcal+=+r.k||0; t.p+=+r.p||0; t.f+=+r.f||0; t.c+=+r.c||0; t.qty+=+r.qty||0; });
+  return { kcal:round1(t.kcal), p:round1(t.p), f:round1(t.f), c:round1(t.c), qty:round1(t.qty) };
+}
+function docsFor(date){
+  return state.docs.filter(d=>d.date===date).sort((a,b)=>{
+    const ia=MEALS.indexOf(a.meal), ib=MEALS.indexOf(b.meal);
+    if(ia!==ib) return ia-ib;
+    const ta=a.time||'', tb=b.time||'';
+    if((ta==='')!==(tb==='')) return ta===''?-1:1;
+    return ta.localeCompare(tb);
+  });
+}
+function renderJournal(){
+  const date=state.journalDate;
+  $('#jDateLabel').textContent=dmy(date);
+  $('#jDateInput').value=date;
+  $('#jWeekday').textContent=weekdayShort(date);
+  $('#jToday').style.display=(date===todayStr())?'none':'inline-flex';
+  const docs=docsFor(date);
+  const box=$('#jList');
+  if(!docs.length){
+    const any=state.docs.length>0;
+    box.innerHTML='<div class="empty"><div class="e-ico"><svg><use href="#i-journal"/></svg></div>'+
+      '<h3>'+(any?'В этот день документов нет':'Журнал пуст')+'</h3>'+
+      '<p>'+(any?'Выберите другую дату или создайте документ':'Создайте первый документ приёма пищи')+'</p>'+
+      '<button class="btn" data-new><svg><use href="#i-plus"/></svg>Документ</button>'+
+      (any?'<button class="btn ghost" data-last style="margin-top:8px">К последним записям</button>':'')+
+      '</div>';
+    box.querySelector('[data-new]').onclick=()=>newDoc();
+    const bl=box.querySelector('[data-last]');
+    if(bl) bl.onclick=()=>{ const last=state.docs.map(d=>d.date).sort().pop(); if(last){ state.journalDate=last; renderJournal(); } };
+    renderTotals([]);
+    return;
+  }
+  box.innerHTML=docs.map((d,i)=>{
+    const t=sumRows(d.rows);
+    return '<div class="card doccard row-anim" style="animation-delay:'+Math.min(i*40,240)+'ms">'+
+      '<button class="iconbtn dotmenu" data-menu="'+d.id+'" aria-label="Меню документа"><svg><use href="#i-dots"/></svg></button>'+
+      '<button class="row" data-open="'+d.id+'">'+
+      '<div class="grow"><div class="l1"><span class="name">'+esc(d.meal)+'</span>'+
+      '<span class="kcal num">'+fmt1(t.kcal)+'</span></div>'+
+      '<div class="l2 num">'+(d.time?'<b>'+esc(d.time)+'</b>&nbsp;&nbsp;':'<b style="color:var(--muted)">без времени</b>&nbsp;&nbsp;')+
+      '<b class="mp">Б '+fmt1(t.p)+'</b>&nbsp;&nbsp;<b class="mf">Ж '+fmt1(t.f)+'</b>&nbsp;&nbsp;<b class="mc">У '+fmt1(t.c)+'</b></div></div>'+
+      '<svg style="color:var(--muted)"><use href="#i-chevr"/></svg></button></div>';
+  }).join('');
+  box.querySelectorAll('[data-open]').forEach(b=>b.onclick=()=>openEditor(b.dataset.open));
+  box.querySelectorAll('[data-menu]').forEach(b=>b.onclick=()=>docActionSheet(b.dataset.menu));
+  renderTotals(docs);
+}
+function renderTotals(docs){
+  let bar=document.getElementById('totalsBar');
+  if(!docs.length){ if(bar) bar.remove(); return; }
+  const t=sumRows(docs.flatMap(d=>d.rows));
+  if(!bar){
+    bar=document.createElement('div');
+    bar.id='totalsBar'; bar.className='totalsbar';
+    document.body.appendChild(bar);
+  }
+  bar.innerHTML='<span class="t-label">Итог дня</span>'+
+    '<span class="t-kcal num">'+fmt1(t.kcal)+' ккал</span>'+
+    '<span class="t-macro num">Б '+fmt1(t.p)+' · Ж '+fmt1(t.f)+' · У '+fmt1(t.c)+'</span>';
+}
+function docActionSheet(docId){
+  const doc=state.docs.find(d=>d.id===docId);
+  if(!doc) return;
+  const m=openSheet(
+    '<div class="sh-head"><span class="t">'+esc(doc.meal)+' · '+dmy(doc.date)+(doc.time?' '+doc.time:'')+'</span>'+
+    '<button class="iconbtn" data-x><svg><use href="#i-x"/></svg></button></div>'+
+    '<div style="display:grid;gap:8px">'+
+    '<button class="btn ghost block" data-act="open"><svg><use href="#i-pen"/></svg>Открыть</button>'+
+    '<button class="btn block" data-act="copy"><svg><use href="#i-copy"/></svg>Копировать документ</button>'+
+    '<button class="btn danger block" data-act="del"><svg><use href="#i-trash"/></svg>Удалить документ</button></div>'
+  );
+  m.el.querySelector('[data-x]').onclick=m.close;
+  m.el.querySelectorAll('[data-act]').forEach(b=>b.onclick=()=>{
+    const act=b.dataset.act; m.close();
+    if(act==='open') openEditor(docId);
+    if(act==='copy') copyDoc(docId);
+    if(act==='del') deleteDoc(docId);
+  });
+}
+function copyDoc(docId){
+  const src=state.docs.find(d=>d.id===docId);
+  if(!src) return;
+  const rows=src.rows.map(r=>{
+    const p=state.products.find(x=>x.id===r.pid);
+    const q=+r.qty||0;
+    if(p){
+      return { pid:p.id, name:p.name, qty:round1(q),
+        k:round1(kcal100(p)*q/100), p:round1(p.p*q/100), f:round1(p.f*q/100), c:round1(p.c*q/100) };
+    }
+    return { pid:r.pid, name:r.name, qty:round1(q), k:round1(r.k), p:round1(r.p), f:round1(r.f), c:round1(r.c) };
+  });
+  const nd={ id:uid(), date:todayStr(), time:nowHM(), meal:src.meal, rows };
+  state.docs.push(nd);
+  state.journalDate=nd.date;
+  persist().then(()=>{ renderJournal(); toast('Документ скопирован на сегодня','ok'); });
+}
+function deleteDoc(docId){
+  const doc=state.docs.find(d=>d.id===docId);
+  if(!doc) return;
+  confirmDialog('Удалить документ','Удалить документ «'+esc(doc.meal)+'» за '+dmy(doc.date)+'? Действие необратимо.', async()=>{
+    state.docs=state.docs.filter(d=>d.id!==docId);
+    await persist(); renderJournal();
+    toast('Документ удалён','ok');
+  },{danger:true, ok:'Удалить'});
+}
+function newDoc(){
+  state.editDoc={ id:null, date:state.journalDate, time:nowHM(), meal:MEALS[0], rows:[] };
+  openEditor(null);
+}
+function openEditor(docId){
+  if(docId){
+    const d=state.docs.find(x=>x.id===docId);
+    if(!d) return;
+    state.editDoc=JSON.parse(JSON.stringify(d));
+  }
+  const ed=state.editDoc;
+  $('#edTitle').textContent=ed.id?'Документ · '+esc(ed.meal):'Новый документ';
+  $('#edDate').value=ed.date;
+  $('#edTime').value=ed.time||'';
+  $('#edMeal').innerHTML=MEALS.map(m=>'<option'+(m===ed.meal?' selected':'')+'>'+esc(m)+'</option>').join('');
+  renderEditorRows();
+  $('#screen-editor').classList.add('active');
+}
+function renderEditorRows(){
+  const ed=state.editDoc;
+  const box=$('#edRows');
+  if(!ed.rows.length){
+    box.innerHTML='<div class="empty"><h3>Позиций нет</h3><p>Добавьте продукт</p></div>';
+  } else {
+    box.innerHTML=ed.rows.map((r,i)=>
+      '<div class="card doccard" style="margin-bottom:10px">'+
+      '<button class="iconbtn dotmenu" data-del="'+i+'" aria-label="Убрать позицию" style="color:var(--red)"><svg><use href="#i-x"/></svg></button>'+
+      '<button class="row" data-qty="'+i+'"><div class="grow">'+
+      '<div class="l1"><span class="name">'+esc(r.name)+'</span><span class="kcal num">'+fmt1(r.k)+'</span></div>'+
+      '<div class="l2 num"><b>'+fmt1(r.qty)+'</b> г&nbsp;&nbsp;<b class="mp">Б '+fmt1(r.p)+'</b>&nbsp;&nbsp;<b class="mf">Ж '+fmt1(r.f)+'</b>&nbsp;&nbsp;<b class="mc">У '+fmt1(r.c)+'</b></div>'+
+      '</div><svg style="color:var(--muted)"><use href="#i-chevr"/></svg></button></div>').join('');
+    box.querySelectorAll('[data-qty]').forEach(b=>b.onclick=()=>editRowQty(+b.dataset.qty));
+    box.querySelectorAll('[data-del]').forEach(b=>b.onclick=()=>{ ed.rows.splice(+b.dataset.del,1); renderEditorRows(); });
+  }
+  const t=sumRows(ed.rows);
+  $('#edTotal').textContent=fmt1(t.kcal)+' ккал';
+}
+function recalcRow(row, qty){
+  row.qty=round1(qty);
+  const p=state.products.find(x=>x.id===row.pid);
+  if(p){
+    row.k=round1(kcal100(p)*qty/100);
+    row.p=round1(p.p*qty/100);
+    row.f=round1(p.f*qty/100);
+    row.c=round1(p.c*qty/100);
+  }
+}
+function editRowQty(i){
+  const ed=state.editDoc; const r=ed.rows[i];
+  const m=openSheet(
+    '<div class="sh-head"><span class="t">'+esc(r.name)+'</span><button class="iconbtn" data-x><svg><use href="#i-x"/></svg></button></div>'+
+    '<label style="font-size:11px;font-weight:800;color:var(--muted);text-transform:uppercase">Количество, г'+
+    '<input id="qVal" type="number" step="0.1" min="0" value="'+esc(r.qty)+'" style="width:100%;margin-top:5px;padding:11px;border:1px solid var(--line);border-radius:9px;background:var(--surface2);font-size:16px"></label>'+
+    '<div style="display:flex;gap:10px;margin-top:14px">'+
+    '<button class="btn ghost" data-swap style="flex:1"><svg><use href="#i-swap"/></svg>Заменить продукт</button>'+
+    '<button class="btn" data-ok style="flex:1">Готово</button></div>',
+    { raised: window.innerWidth<=640 }
+  );
+  const ok=()=>{ const q=round1(m.el.querySelector('#qVal').value); if(q>0){ recalcRow(r,q); renderEditorRows(); } m.close(); };
+  m.el.querySelector('[data-x]').onclick=m.close;
+  m.el.querySelector('[data-ok]').onclick=ok;
+  m.el.querySelector('[data-swap]').onclick=()=>{ m.close(); productPicker(i); };
+  m.el.querySelector('#qVal').addEventListener('keydown',(e)=>{ if(e.key==='Enter'){ e.preventDefault(); ok(); } });
+  setTimeout(()=>{ const el=m.el.querySelector('#qVal'); el.focus(); el.select(); },80);
+}
+function productPicker(replaceIndex){
+  const isReplace = typeof replaceIndex === 'number';
+  const m=openSheet(
+    '<div class="sh-head"><span class="t">'+(isReplace?'Заменить продукт':'Выбрать продукт')+'</span>'+
+    '<button class="btn sm" id="pkNew"><svg><use href="#i-plus"/></svg>Продукт</button>'+
+    '<button class="iconbtn" data-x aria-label="Закрыть"><svg><use href="#i-x"/></svg></button></div>'+
+    '<div class="searchwrap"><svg><use href="#i-basket"/></svg><input id="pkSearch" placeholder="Поиск…" autocomplete="off"></div>'+
+    '<div class="card" id="pkList"></div>'
+  );
+  const draw=()=>{
+    const q=normName(m.el.querySelector('#pkSearch').value);
+    const items=state.products.filter(p=>!q||normName(p.name).includes(q));
+    const list=m.el.querySelector('#pkList');
+    list.innerHTML=items.length
+      ? items.map(p=>
+        '<div class="picker-row" style="border-bottom:1px solid var(--line)">'+
+        '<button class="row" data-pick="'+p.id+'" style="padding-right:48px"><div class="grow">'+
+        '<div class="l1"><span class="name">'+esc(p.name)+'</span><span class="kcal num">'+fmt1(kcal100(p))+'</span></div>'+
+        '<div class="l2 num"><b class="mp">Б '+fmt1(p.p)+'</b>&nbsp;&nbsp;<b class="mf">Ж '+fmt1(p.f)+'</b>&nbsp;&nbsp;<b class="mc">У '+fmt1(p.c)+'</b>&nbsp;&nbsp;· на 100 г</div></div></button>'+
+        '<button class="iconbtn p-edit" data-pedit="'+p.id+'" aria-label="Изменить"><svg><use href="#i-pen"/></svg></button></div>').join('')
+      : '<div class="empty"><p>'+(q?'Ничего не найдено':'Справочник пуст — добавьте продукт')+'</p></div>';
+    list.querySelectorAll('[data-pick]').forEach(b=>b.onclick=()=>{
+      const p=state.products.find(x=>x.id===b.dataset.pick);
+      if(isReplace){
+        const r=state.editDoc.rows[replaceIndex];
+        r.pid=p.id; r.name=p.name;
+        recalcRow(r, r.qty);
+        m.close(); renderEditorRows();
+      } else {
+        const row={ pid:p.id, name:p.name, qty:100, k:kcal100(p), p:round1(p.p), f:round1(p.f), c:round1(p.c) };
+        state.editDoc.rows.push(row);
+        m.close(); renderEditorRows();
+        editRowQty(state.editDoc.rows.length-1);
+      }
+    });
+    list.querySelectorAll('[data-pedit]').forEach(b=>b.onclick=()=>{
+      const p=state.products.find(x=>x.id===b.dataset.pedit);
+      m.close();
+      productForm(p, ()=>{ productPicker(isReplace?replaceIndex:undefined); });
+    });
+  };
+  m.el.querySelector('#pkSearch').addEventListener('input',draw);
+  m.el.querySelector('#pkNew').onclick=()=>{
+    m.close();
+    productForm(null, ()=>productPicker(isReplace?replaceIndex:undefined));
+  };
+  m.el.querySelector('[data-x]').onclick=m.close;
+  draw();
+}
+async function saveDoc(){
+  const ed=state.editDoc;
+  ed.date=$('#edDate').value||todayStr();
+  ed.time=$('#edTime').value||'';
+  ed.meal=$('#edMeal').value;
+  const doSave=async()=>{
+    if(ed.id){
+      const i=state.docs.findIndex(d=>d.id===ed.id);
+      state.docs[i]=JSON.parse(JSON.stringify(ed));
+    } else {
+      ed.id=uid();
+      state.docs.push(JSON.parse(JSON.stringify(ed)));
+    }
+    await persist();
+    $('#screen-editor').classList.remove('active');
+    state.journalDate=ed.date;
+    renderJournal();
+    toast('Документ сохранён','ok');
+  };
+  if(ed.date<todayStr()){
+    confirmDialog('Проверка даты','Попытка сохранить документ с НеСегодняшней датой. Действительно сохранить?', doSave, {ok:'Да', no:'Нет'});
+  } else {
+    doSave();
+  }
+}
+
+function computeReport(){
+  const from=$('#repFrom').value||todayStr();
+  const to=$('#repTo').value||todayStr();
+  const docs=state.docs.filter(d=>d.date>=from&&d.date<=to);
+  const prodMap={}; const dayMap={}; const docLines=[];
+  const sortedDocs=[...docs].sort((a,b)=>{
+    if(a.date!==b.date) return a.date<b.date?-1:1;
+    const ia=MEALS.indexOf(a.meal), ib=MEALS.indexOf(b.meal);
+    if(ia!==ib) return ia-ib;
+    const ta=a.time||'', tb=b.time||'';
+    if((ta==='')!==(tb==='')) return ta===''?-1:1;
+    return ta.localeCompare(tb);
+  });
+  const docGroups=[];
+  sortedDocs.forEach(d=>{
+    d.rows.forEach(r=>{
+      const k=r.pid;
+      if(!prodMap[k]) prodMap[k]={ name:r.name, qty:0, kcal:0, p:0, f:0, c:0 };
+      const o=prodMap[k];
+      o.qty+=+r.qty||0; o.kcal+=+r.k||0; o.p+=+r.p||0; o.f+=+r.f||0; o.c+=+r.c||0;
+    });
+    if(!dayMap[d.date]) dayMap[d.date]={ name:dmy(d.date)+' '+weekdayShort(d.date), date:d.date, qty:0, kcal:0, p:0, f:0, c:0 };
+    const dy=dayMap[d.date];
+    const t=sumRows(d.rows);
+    dy.qty+=t.qty; dy.kcal+=t.kcal; dy.p+=t.p; dy.f+=t.f; dy.c+=t.c;
+    docLines.push({ name:d.meal+' · '+dmy(d.date)+(d.time?' '+d.time:''), qty:t.qty, kcal:t.kcal, p:t.p, f:t.f, c:t.c });
+    let g=docGroups[docGroups.length-1];
+    if(!g || g.date!==d.date){ g={ date:d.date, dlist:[] }; docGroups.push(g); }
+    g.dlist.push(d);
+  });
+  const fin=(o)=>({ name:o.name, qty:round1(o.qty), kcal:round1(o.kcal), p:round1(o.p), f:round1(o.f), c:round1(o.c) });
+  const products=Object.values(prodMap).map(fin).sort((a,b)=>a.name.localeCompare(b.name,'ru'));
+  const days=Object.values(dayMap).map(fin).sort((a,b)=>a.date.localeCompare(b.date));
+  const totalRaw={ name:'Всего', qty:0, kcal:0, p:0, f:0, c:0 };
+  days.forEach(d=>{ totalRaw.qty+=d.qty; totalRaw.kcal+=d.kcal; totalRaw.p+=d.p; totalRaw.f+=d.f; totalRaw.c+=d.c; });
+  return { docs, docGroups, products, days, docLines, total:fin(totalRaw), dayCount:days.length };
+}
+function tcells(x){
+  return '<td>'+esc(x.name)+'</td><td class="num">'+fmt1(x.qty)+'</td><td class="ck num">'+fmt1(x.kcal)+'</td>'+
+    '<td class="num">'+fmt1(x.p)+'</td><td class="num">'+fmt1(x.f)+'</td><td class="num">'+fmt1(x.c)+'</td>';
+}
+function trow(x){ return '<tr>'+tcells(x)+'</tr>'; }
+function renderReport(){
+  const r=computeReport();
+  const body=$('#repBody');
+  const f={ pdet:$('#fProdDetail').checked, prod:$('#fProducts').checked, docs:$('#fDocs').checked, days:$('#fDays').checked, total:$('#fTotal').checked };
+  let html='';
+  if(!r.docs.length){
+    html='<tr><td colspan="6" style="text-align:center;color:var(--muted);padding:26px 10px;white-space:normal">Нет документов за выбранный период</td></tr>';
+  } else {
+    if(f.prod) html+='<tr class="sec"><td colspan="6">Итог по продуктам</td></tr>'+r.products.map(trow).join('');
+    if(f.docs){
+      r.docGroups.forEach(g=>{
+        const day={qty:0,kcal:0,p:0,f:0,c:0};
+        g.dlist.forEach(d=>{
+          html+='<tr class="dhead"><td colspan="6">'+esc(d.meal)+' · '+dmy(g.date)+(d.time?' · '+esc(d.time):'')+'</td></tr>';
+          if(f.pdet) d.rows.forEach(rr=>{ html+=trow({name:rr.name, qty:rr.qty, kcal:rr.k, p:rr.p, f:rr.f, c:rr.c}); });
+          const t=sumRows(d.rows);
+          day.qty+=t.qty; day.kcal+=t.kcal; day.p+=t.p; day.f+=t.f; day.c+=t.c;
+          html+='<tr class="dtotal">'+tcells({name:'Итог · '+d.meal, qty:t.qty, kcal:t.kcal, p:t.p, f:t.f, c:t.c})+'</tr>';
+        });
+        html+='<tr class="daytotal">'+tcells({name:'Итог за день · '+dmy(g.date), qty:round1(day.qty), kcal:round1(day.kcal), p:round1(day.p), f:round1(day.f), c:round1(day.c)})+'</tr>';
+      });
+    }
+    if(f.days) html+='<tr class="sec"><td colspan="6">Итоги по дням</td></tr>'+r.days.map(trow).join('');
+    if(f.total){
+      html+='<tr class="sec"><td colspan="6">Общие итоги</td></tr>';
+      if(r.dayCount){
+        const avg={ name:'Среднедневные', qty:round1(r.total.qty/r.dayCount), kcal:round1(r.total.kcal/r.dayCount),
+          p:round1(r.total.p/r.dayCount), f:round1(r.total.f/r.dayCount), c:round1(r.total.c/r.dayCount) };
+        html+='<tr class="avg">'+tcells(avg)+'</tr>';
+      }
+    }
+  }
+  body.innerHTML=html;
+}
+function reportText(){
+  const r=computeReport();
+  const f={ pdet:$('#fProdDetail').checked, prod:$('#fProducts').checked, docs:$('#fDocs').checked, days:$('#fDays').checked, total:$('#fTotal').checked };
+  const L=['# Отчёт DIETA · '+dmy($('#repFrom').value)+' — '+dmy($('#repTo').value)];
+  const line=(x)=>x.name+' — '+fmt1(x.qty)+' г — '+fmt1(x.kcal)+' ккал — Б '+fmt1(x.p)+' Ж '+fmt1(x.f)+' У '+fmt1(x.c);
+  if(f.prod){ L.push('','## Итог по продуктам'); r.products.forEach(x=>L.push('- '+line(x))); }
+  if(f.docs){
+    L.push('','## По документам');
+    r.docGroups.forEach(g=>{
+      g.dlist.forEach(d=>{
+        const t=sumRows(d.rows);
+        L.push('- '+line({name:d.meal+' · '+dmy(g.date)+(d.time?' '+d.time:''), qty:t.qty, kcal:t.kcal, p:t.p, f:t.f, c:t.c}));
+        if(f.pdet) d.rows.forEach(rr=>L.push('  - '+line({name:rr.name, qty:rr.qty, kcal:rr.k, p:rr.p, f:rr.f, c:rr.c})));
+      });
+    });
+  }
+  if(f.days){ L.push('','## Итоги по дням'); r.days.forEach(x=>L.push('- '+line(x))); }
+  if(f.total){
+    L.push('','## Общие итоги');
+    if(r.dayCount){
+      const avg={ name:'Среднедневные', qty:round1(r.total.qty/r.dayCount), kcal:round1(r.total.kcal/r.dayCount),
+        p:round1(r.total.p/r.dayCount), f:round1(r.total.f/r.dayCount), c:round1(r.total.c/r.dayCount) };
+      L.push('- '+line(avg)+' (дней с документами: '+r.dayCount+')');
+    }
+  }
+  return L.join('\n');
+}
+
+function fullBackup(){
+  return JSON.stringify({ app:'DIETA', version:APP_VERSION, date:todayStr(),
+    products:state.products, docs:state.docs, weights:state.weights, meals:MEALS, meta:state.meta }, null, 2);
+}
+function downloadFile(name, content, type){
+  const blob=new Blob([content],{type:type||'application/json'});
+  const url=URL.createObjectURL(blob);
+  const a=document.createElement('a');
+  a.href=url; a.download=name;
+  document.body.appendChild(a); a.click(); a.remove();
+  setTimeout(()=>URL.revokeObjectURL(url),4000);
+}
+let pendingImport=null;
+function pickFile(onText){
+  const fi=$('#fileInput');
+  fi.value='';
+  fi.onchange=()=>{
+    const file=fi.files[0];
+    if(!file) return;
+    const rd=new FileReader();
+    rd.onload=()=>onText(String(rd.result), file.name);
+    rd.readAsText(file);
+  };
+  fi.click();
+}
+function exportDB(){
+  downloadFile('dieta-db-'+todayStr()+'.json', fullBackup());
+  state.meta.lastBackup=todayStr();
+  persist().then(()=>toast('База выгружена','ok'));
+}
+function importDB(){
+  pickFile((text)=>{
+    let data;
+    try{ data=JSON.parse(text); }catch(e){ toast('Файл повреждён или не является базой DIETA','err'); return; }
+    if(!data || !Array.isArray(data.products) && !Array.isArray(data.docs)){ toast('Это не файл базы DIETA','err'); return; }
+    confirmDialog('Импорт базы','Текущая база будет <b>полностью заменена</b> данными из файла. Продолжить?', async()=>{
+      state.products=Array.isArray(data.products)?data.products:[];
+      state.docs=(data.docs||[]).map(d=>{
+        const dd=Object.assign({}, d);
+        dd.rows=(Array.isArray(d.rows)?d.rows:[]).map(x=>{ const y=Object.assign({}, x); if(y.k===undefined && y.kcal!==undefined) y.k=y.kcal; return y; });
+        return dd;
+      });
+      state.weights=Array.isArray(data.weights)?data.weights:[];
+      if(data.meta && typeof data.meta==='object') state.meta=Object.assign(state.meta,data.meta);
+      await persist(); renderAll();
+      toast('База импортирована','ok');
+    },{danger:true, ok:'Заменить'});
+  });
+}
+function exportProducts(){
+  downloadFile('dieta-products-'+todayStr()+'.json', JSON.stringify({ app:'DIETA-products', products:state.products }, null, 2));
+  toast('Продукты выгружены','ok');
+}
+const importFlags={ replaceAll:false, keepAll:false };
+function importProducts(){
+  pickFile((text)=>{
+    let data;
+    try{ data=JSON.parse(text); }catch(e){ toast('Файл повреждён','err'); return; }
+    const list=Array.isArray(data)?data:Array.isArray(data.products)?data.products:null;
+    if(!list){ toast('В файле нет списка продуктов','err'); return; }
+    const incoming=list.filter(p=>p&&p.name);
+    importFlags.replaceAll=false; importFlags.keepAll=false;
+    let added=0, replaced=0, skipped=0;
+    let i=0;
+    const next=async()=>{
+      while(i<incoming.length){
+        const p=incoming[i]; i++;
+        const nn=normName(p.name);
+        const ex=state.products.find(x=>normName(x.name)===nn);
+        const rec={ id:(ex?ex.id:uid()), name:String(p.name).slice(0,25), p:round1(p.p), f:round1(p.f), c:round1(p.c) };
+        rec.k=kcal100(rec);
+        if(!ex){ state.products.push(rec); added++; continue; }
+        if(importFlags.replaceAll){ const idx=state.products.indexOf(ex); state.products[idx]=rec; replaced++; continue; }
+        if(importFlags.keepAll){ skipped++; continue; }
+        pendingImport={ p:rec, ex, resume:next };
+        askConflict(rec.name);
+        return;
+      }
+      state.products.sort((a,b)=>a.name.localeCompare(b.name,'ru'));
+      await persist(); renderProducts();
+      toast('Импорт: добавлено '+added+', заменено '+replaced+(skipped?', пропущено '+skipped:''),'ok');
+    };
+    next();
+  });
+}
+function askConflict(name){
+  const m=openSheet(
+    '<div class="sh-head"><span class="t">Совпадение</span></div>'+
+    '<p style="font-size:14px;line-height:1.5;margin-bottom:16px">Продукт <b>'+esc(name)+'</b> уже есть в справочнике. Что сделать?</p>'+
+    '<div style="display:grid;gap:8px">'+
+    '<button class="btn block" data-a="replace">Заменить</button>'+
+    '<button class="btn ghost block" data-a="replaceAll">Заменить все</button>'+
+    '<button class="btn ghost block" data-a="keep">Оставить</button>'+
+    '<button class="btn ghost block" data-a="keepAll">Оставить все</button></div>',
+    {center:true}
+  );
+  m.el.querySelectorAll('[data-a]').forEach(b=>b.onclick=()=>{
+    const a=b.dataset.a; m.close();
+    const pi=pendingImport; pendingImport=null;
+    if(!pi) return;
+    if(a==='replace'){ const idx=state.products.indexOf(pi.ex); state.products[idx]=pi.p; }
+    if(a==='replaceAll'){ const idx=state.products.indexOf(pi.ex); state.products[idx]=pi.p; importFlags.replaceAll=true; }
+    if(a==='keepAll'){ importFlags.keepAll=true; }
+    pi.resume();
+  });
+}
+
+let svcView='menu';
+function renderService(){
+  const box=$('#svcArea');
+  if(svcView==='menu'){
+    box.innerHTML='<div class="card">'+
+      svcRow('i-db','', 'Виды приёмов пищи','Справочник (только чтение)', ()=>{svcView='meals';renderService();})+
+      svcRow('i-up','', 'Экспорт базы','JSON · все данные', exportDB)+
+      svcRow('i-down','', 'Импорт базы','Полная замена, с подтверждением', importDB)+
+      svcRow('i-up','', 'Экспорт продуктов','JSON · справочник', exportProducts)+
+      svcRow('i-down','', 'Импорт продуктов','Добавление к существующим', importProducts)+
+      svcRow('i-report','', 'Статистика','Показатели базы', ()=>{svcView='stats';renderService();})+
+      '</div>'+
+      '<p class="h-sub" style="margin-top:14px;text-align:center">DIETA v '+APP_VERSION+' · данные хранятся на этом устройстве</p>';
+  } else if(svcView==='meals'){
+    box.innerHTML='<button class="btn ghost sm" data-back style="margin-bottom:12px"><svg><use href="#i-chevl"/></svg>Назад</button>'+
+      '<div class="card">'+MEALS.map((m,i)=>'<div class="meal-chip"><span class="idx">'+(i+1)+'</span>'+esc(m)+'</div>').join('')+'</div>'+
+      '<p class="h-sub" style="margin-top:10px">Порядок видов фиксирован: Завтрак, Обед, Полдник, Ужин.</p>';
+    box.querySelector('[data-back]').onclick=()=>{svcView='menu';renderService();};
+  } else if(svcView==='stats'){
+    const m=state.meta;
+    box.innerHTML='<button class="btn ghost sm" data-back style="margin-bottom:12px"><svg><use href="#i-chevl"/></svg>Назад</button>'+
+      '<div class="card"><div class="stat-grid">'+
+      st('Продуктов в справочнике', String(state.products.length))+
+      st('Документов ПП', String(state.docs.length))+
+      st('Записей веса', String(state.weights.length))+
+      st('Дата последнего входа', m.lastLaunch?dmy(m.lastLaunch):'—')+
+      st('Дата последней резервной копии', m.lastBackup?dmy(m.lastBackup):'ещё не создавалась')+
+      st('Последнее сохранение', m.lastSave||'—')+
+      st('Хранилище', DB.useLS?'localStorage (резерв)':'IndexedDB')+
+      st('Версия', APP_VERSION)+
+      '</div></div>';
+    box.querySelector('[data-back]').onclick=()=>{svcView='menu';renderService();};
+  }
+}
+function svcRow(ico, warn, title, desc, fn){
+  const id='svc-'+uid();
+  setTimeout(()=>{ const el=document.getElementById(id); if(el) el.onclick=fn; },0);
+  return '<button class="svc-row" id="'+id+'"><span class="s-ico'+(warn?' warn':'')+'"><svg><use href="#'+ico+'"/></svg></span>'+
+    '<span class="grow"><span class="s-t">'+title+'</span><div class="s-d">'+desc+'</div></span>'+
+    '<svg style="color:var(--muted)"><use href="#i-chevr"/></svg></button>';
+}
+function st(k,v){ return '<div class="st"><span>'+k+'</span><b class="num">'+esc(v)+'</b></div>'; }
+
+function maybeAutoBackup(){
+  const m=state.meta;
+  const today=todayStr();
+  const lastBk=m.lastBackup||m.lastLaunch||today;
+  const days=(new Date(today)-new Date(lastBk))/86400000;
+  if(days>=7 && m.lastChange && m.lastChange>lastBk){
+    confirmDialog('Резервная копия','Прошло больше 7 дней с последней копии, а в базе есть изменения. Сохранить резервную копию сейчас?', ()=>{
+      downloadFile('dieta-db-'+today+'.json', fullBackup());
+      state.meta.lastBackup=today;
+      persist();
+    },{ok:'Сохранить', no:'Позже'});
+  }
+}
+
+const screens={ journal:$('#screen-journal'), report:$('#screen-report'), products:$('#screen-products'), weight:$('#screen-weight'), service:$('#screen-service') };
+const tabs=$$('.tab');
+let currentTab='journal';
+function applyTabbarMode(){
+  const landscape=window.matchMedia('(orientation: landscape)').matches;
+  document.body.classList.toggle('no-tabbar', landscape&&currentTab==='report');
+}
+function switchTab(name){
+  currentTab=name;
+  tabs.forEach(t=>t.classList.toggle('active', t.dataset.tab===name));
+  Object.keys(screens).forEach(k=>screens[k].classList.toggle('active', k===name));
+  const tb=document.getElementById('totalsBar');
+  if(tb) tb.style.display=(name==='journal')?'':'none';
+  if(name==='report'){
+    $('#repFrom').value=state.journalDate; $('#repTo').value=state.journalDate;
+    renderReport();
+  }
+  if(name==='service'){ svcView='menu'; renderService(); }
+  if(name==='products') renderProducts();
+  if(name==='weight') renderWeights();
+  if(name==='journal') renderJournal();
+  applyTabbarMode();
+  window.scrollTo({top:0});
+}
+tabs.forEach(t=>t.onclick=()=>switchTab(t.dataset.tab));
+window.addEventListener('resize', applyTabbarMode);
+$('#repHome').onclick=()=>switchTab('journal');
+
+function onBeforeUnload(e){ e.preventDefault(); e.returnValue=''; }
+window.addEventListener('beforeunload', onBeforeUnload);
+
+window.addEventListener('pagehide', function(e) {
+    e.preventDefault();
+    sessionStorage.setItem('wasClosedWithUnsaved', 'true');
+});
+
+document.addEventListener('visibilitychange', function() {
+    if (document.visibilityState === 'hidden') {
+        if (typeof persist === 'function') {
+            persist();
+        }
+    }
+});
+
+if(window.matchMedia('(pointer: coarse)').matches){
+  let exitArmed=false;
+  try{ history.pushState({dietaGuard:1},''); }catch(e){}
+  window.addEventListener('popstate',()=>{
+    if(exitArmed) return;
+    try{ history.pushState({dietaGuard:1},''); }catch(e){}
+    confirmDialog('Выйти из приложения','Все изменения уже сохранены. Действительно закрыть DIETA?',()=>{
+      exitArmed=true;
+      window.removeEventListener('beforeunload', onBeforeUnload);
+      try{ history.back(); }catch(e){}
+    },{ok:'Выйти', no:'Остаться'});
+  });
+}
+
+function shiftDay(delta){
+  const d=new Date(state.journalDate+'T12:00:00');
+  d.setDate(d.getDate()+delta);
+  state.journalDate=todayStr(d);
+  renderJournal();
+}
+$('#jPrev').onclick=()=>shiftDay(-1);
+$('#jNext').onclick=()=>shiftDay(1);
+$('#jToday').onclick=()=>{ state.journalDate=todayStr(); renderJournal(); };
+$('#jDateInput').addEventListener('change',(e)=>{ if(e.target.value){ state.journalDate=e.target.value; renderJournal(); } });
+$('#jAdd').onclick=()=>newDoc();
+let touchX=null, touchY=null;
+$('#screen-journal').addEventListener('touchstart',(e)=>{ touchX=e.touches[0].clientX; touchY=e.touches[0].clientY; },{passive:true});
+$('#screen-journal').addEventListener('touchend',(e)=>{
+  if(touchX==null) return;
+  const dx=e.changedTouches[0].clientX-touchX;
+  const dy=e.changedTouches[0].clientY-touchY;
+  if(Math.abs(dx)>60 && Math.abs(dx)>Math.abs(dy)*1.5) shiftDay(dx<0?1:-1);
+  touchX=null; touchY=null;
+},{passive:true});
+$('#edClose').onclick=()=>$('#screen-editor').classList.remove('active');
+$('#edAddRow').onclick=()=>productPicker();
+$('#edSave').onclick=()=>saveDoc();
+
+$('#repFrom').value=todayStr();
+$('#repTo').value=todayStr();
+['repFrom','repTo'].forEach(id=>$('#'+id).addEventListener('change',renderReport));
+['fProdDetail','fProducts','fDocs','fDays','fTotal'].forEach(id=>$('#'+id).addEventListener('change',renderReport));
+$('#repFilterBtn').onclick=()=>{
+  const btn=$('#repFilterBtn'); const panel=$('#repFilters');
+  const open=panel.style.display==='none';
+  panel.style.display=open?'flex':'none';
+  btn.classList.toggle('active',open);
+};
+$('#repCopy').onclick=async()=>{
+  const txt=reportText();
+  let ok=false;
+  try{ await navigator.clipboard.writeText(txt); ok=true; }
+  catch(e){
+    try{
+      const ta=document.createElement('textarea'); ta.value=txt;
+      ta.style.position='fixed'; ta.style.opacity='0';
+      document.body.appendChild(ta); ta.select();
+      ok=document.execCommand('copy'); ta.remove();
+    }catch(e2){ ok=false; }
+  }
+  toast(ok?'Отчёт скопирован — можно вставить в чат с ИИ':'Не удалось скопировать', ok?'ok':'err');
+};
+$('#pAdd').onclick=()=>productForm(null, renderProducts);
+$('#pSearch').addEventListener('input', renderProducts);
+$('#wAdd').onclick=()=>weightForm(null);
+
+function renderAll(){
+  renderJournal(); renderProducts(); renderWeights(); renderService();
+}
+
+const withTimeout=(promise, ms)=>Promise.race([
+  promise,
+  new Promise((_, rej)=>setTimeout(()=>rej(new Error('storage timeout')), ms))
+]);
+function getSplash(){ return document.getElementById('d-splash'); }
+function killSplash(){
+  document.querySelectorAll('#d-splash').forEach(function(n){ n.classList.add('off'); });
+  setTimeout(function(){
+    document.querySelectorAll('#d-splash').forEach(function(n){ if(n.parentNode) n.parentNode.removeChild(n); });
+  },700);
+}
+async function boot(){
+  window.__dietaBoot='открываю хранилище';
+  try{ await withTimeout(DB.open(), 2000); }
+  catch(e){ DB.useLS=true; console.warn('IndexedDB недоступна — использую localStorage', e); }
+  try{
+    window.__dietaBoot='читаю данные';
+    const asArr=(x)=>Array.isArray(x)?x:[];
+    state.products=asArr(await DB.get('products','all'));
+    state.docs=asArr(await DB.get('docs','all'));
+    state.weights=asArr(await DB.get('weights','all'));
+    const metaRaw=await DB.get('meta','all');
+    state.meta=Object.assign(state.meta,(metaRaw&&typeof metaRaw==='object'&&!Array.isArray(metaRaw))?metaRaw:{});
+
+    window.__dietaBoot='сохраняю';
+    state.meta.lastLaunch=todayStr();
+    await writeAll();
+
+    if(state.docs.length){
+      const last=state.docs.map(d=>d.date).sort().pop();
+      if(last) state.journalDate=last;
+    }
+
+    window.__dietaBoot='рисую экраны';
+    renderAll();
+    switchTab('journal');
+
+    maybeAutoBackup();
+
+    window.__dietaBoot='готово';
+    killSplash(); setTimeout(killSplash,800); setTimeout(killSplash,2000);
+  }catch(err){
+    console.error('Ошибка запуска DIETA', err);
+    window.__dietaErrors.push('boot: '+(err&&err.message?err.message:String(err)));
+    const sp=getSplash();
+    if(sp) sp.innerHTML='<div style="max-width:280px;text-align:center;line-height:1.6;font-size:13px;padding:0 24px;color:var(--muted)">Не удалось запустить журнал.<br>Откройте страницу заново.</div>';
+  }
+}
+setTimeout(function(){
+  if(window.__DIETA_CLAIMED_VERSION!==APP_VERSION) return;
+  if(window.__DIETA_BOOTED) return;
+  window.__DIETA_BOOTED=APP_VERSION;
+  boot();
+},0);
+})();
+</script>
+
+<script>
+function __dietaKillAllSplash(){
+  document.querySelectorAll('#d-splash').forEach(function (n) { n.classList.add('off'); });
+  setTimeout(function () {
+    document.querySelectorAll('#d-splash').forEach(function (n) { if (n.parentNode) n.parentNode.removeChild(n); });
+  }, 700);
+}
+function __dietaDrawDiag(sp){
+  var stage = window.__dietaBoot || 'неизвестен';
+  var errs = (window.__dietaErrors || []).slice(0, 4).join('\n') || 'запуск не завершился за отведённое время';
+  sp.innerHTML =
+    '<div style="max-width:320px;text-align:left;line-height:1.55;font-size:12px;color:#4a5a42;padding:0 24px">' +
+    '<div style="font-weight:800;font-size:15px;color:#b5453a;margin-bottom:8px">Не удалось запустить журнал</div>' +
+    '<div style="margin-bottom:6px">Этап запуска: <b>' + stage + '</b></div>' +
+    '<div style="font-family:monospace;font-size:11px;background:#fbf8ef;border:1px solid #e0d8c2;border-radius:8px;padding:8px 10px;white-space:pre-wrap;word-break:break-word">' + errs + '</div>' +
+    '<div style="margin-top:6px;font-size:11px;color:#71805f">Скрипт-блоки, символов: ' + (window.__dietaScriptInfo ? window.__dietaScriptInfo() : '?') + ' (у здорового файла — 3 блока)</div>' +
+    '<div style="margin-top:8px;color:#71805f">Скопируйте текст выше и отправьте разработчику.</div>' +
+    '</div>';
+}
+function __dietaCheck(retries){
+  var launched = (window.__dietaBoot === 'готово') || document.querySelector('.screen.active');
+  if (launched) { __dietaKillAllSplash(); return; }
+  var sp = document.getElementById('d-splash');
+  var hasErr = (window.__dietaErrors || []).length > 0;
+  if (hasErr && sp) { __dietaDrawDiag(sp); return; }
+  if (retries > 0) { setTimeout(function(){ __dietaCheck(retries-1); }, 3000); }
+  else if (sp) { __dietaDrawDiag(sp); }
+}
+setTimeout(function(){ __dietaCheck(8); }, 6000);
+</script>
+</body>
+</html>
