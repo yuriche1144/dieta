@@ -757,4 +757,645 @@ function copyDoc(docId){
       return { pid:p.id, name:p.name, qty:round1(q),
         k:round1(kcal100(p)*q/100), p:round1(p.p*q/100), f:round1(p.f*q/100), c:round1(p.c*q/100) };
     }
-    return { pid:r.pid, name:r.name, qty:round1(q), k:round1(r.k), p:round1(r.p), f:round
+    return { pid:r.pid, name:r.name, qty:round1(q), k:round1(r.k), p:round1(r.p), f:round1(r.f), c:round1(r.c) };
+  });
+  const nd={ id:uid(), date:todayStr(), time:nowHM(), meal:src.meal, rows };
+  state.docs.push(nd);
+  state.journalDate=nd.date;
+  persist().then(()=>{ renderJournal(); toast('Документ скопирован на сегодня','ok'); });
+}
+function deleteDoc(docId){
+  const doc=state.docs.find(d=>d.id===docId);
+  if(!doc) return;
+  confirmDialog('Удалить документ','Удалить документ «'+esc(doc.meal)+'» за '+dmy(doc.date)+'? Действие необратимо.', async()=>{
+    state.docs=state.docs.filter(d=>d.id!==docId);
+    await persist(); renderJournal();
+    toast('Документ удалён','ok');
+  },{danger:true, ok:'Удалить'});
+}
+function newDoc(){
+  state.editDoc={ id:null, date:state.journalDate, time:nowHM(), meal:MEALS[0], rows:[] };
+  openEditor(null);
+}
+function openEditor(docId){
+  if(docId){
+    const d=state.docs.find(x=>x.id===docId);
+    if(!d) return;
+    state.editDoc=JSON.parse(JSON.stringify(d));
+  }
+  const ed=state.editDoc;
+  $('#edTitle').textContent=ed.id?'Документ · '+esc(ed.meal):'Новый документ';
+  $('#edDate').value=ed.date;
+  $('#edTime').value=ed.time||'';
+  $('#edMeal').innerHTML=MEALS.map(m=>'<option'+(m===ed.meal?' selected':'')+'>'+esc(m)+'</option>').join('');
+  renderEditorRows();
+  $('#screen-editor').classList.add('active');
+}
+function renderEditorRows(){
+  const ed=state.editDoc;
+  const box=$('#edRows');
+  if(!ed.rows.length){
+    box.innerHTML='<div class="empty"><h3>Позиций нет</h3><p>Добавьте продукт</p></div>';
+  } else {
+    box.innerHTML=ed.rows.map((r,i)=>
+      '<div class="card doccard" style="margin-bottom:10px">'+
+      '<button class="iconbtn dotmenu" data-del="'+i+'" aria-label="Убрать позицию" style="color:var(--red)"><svg><use href="#i-x"/></svg></button>'+
+      '<button class="row" data-qty="'+i+'"><div class="grow">'+
+      '<div class="l1"><span class="name">'+esc(r.name)+'</span><span class="kcal num">'+fmt1(r.k)+'</span></div>'+
+      '<div class="l2 num"><b>'+fmt1(r.qty)+'</b> г&nbsp;&nbsp;<b class="mp">Б '+fmt1(r.p)+'</b>&nbsp;&nbsp;<b class="mf">Ж '+fmt1(r.f)+'</b>&nbsp;&nbsp;<b class="mc">У '+fmt1(r.c)+'</b></div>'+
+      '</div><svg style="color:var(--muted)"><use href="#i-chevr"/></svg></button></div>').join('');
+    box.querySelectorAll('[data-qty]').forEach(b=>b.onclick=()=>editRowQty(+b.dataset.qty));
+    box.querySelectorAll('[data-del]').forEach(b=>b.onclick=()=>{ ed.rows.splice(+b.dataset.del,1); renderEditorRows(); });
+  }
+  const t=sumRows(ed.rows);
+  $('#edTotal').textContent=fmt1(t.kcal)+' ккал';
+}
+function recalcRow(row, qty){
+  row.qty=round1(qty);
+  const p=state.products.find(x=>x.id===row.pid);
+  if(p){
+    row.k=round1(kcal100(p)*qty/100);
+    row.p=round1(p.p*qty/100);
+    row.f=round1(p.f*qty/100);
+    row.c=round1(p.c*qty/100);
+  }
+}
+function editRowQty(i){
+  const ed=state.editDoc; const r=ed.rows[i];
+  const m=openSheet(
+    '<div class="sh-head"><span class="t">'+esc(r.name)+'</span><button class="iconbtn" data-x><svg><use href="#i-x"/></svg></button></div>'+
+    '<label style="font-size:11px;font-weight:800;color:var(--muted);text-transform:uppercase">Количество, г'+
+    '<input id="qVal" type="number" step="0.1" min="0" value="'+esc(r.qty)+'" style="width:100%;margin-top:5px;padding:11px;border:1px solid var(--line);border-radius:9px;background:var(--surface2);font-size:16px"></label>'+
+    '<div style="display:flex;gap:10px;margin-top:14px">'+
+    '<button class="btn ghost" data-swap style="flex:1"><svg><use href="#i-swap"/></svg>Заменить продукт</button>'+
+    '<button class="btn" data-ok style="flex:1">Готово</button></div>',
+    { raised: window.innerWidth<=640 }
+  );
+  const ok=()=>{ const q=round1(m.el.querySelector('#qVal').value); if(q>0){ recalcRow(r,q); renderEditorRows(); } m.close(); };
+  m.el.querySelector('[data-x]').onclick=m.close;
+  m.el.querySelector('[data-ok]').onclick=ok;
+  m.el.querySelector('[data-swap]').onclick=()=>{ m.close(); productPicker(i); };
+  m.el.querySelector('#qVal').addEventListener('keydown',(e)=>{ if(e.key==='Enter'){ e.preventDefault(); ok(); } });
+  setTimeout(()=>{ const el=m.el.querySelector('#qVal'); el.focus(); el.select(); },80);
+}
+function productPicker(replaceIndex){
+  const isReplace = typeof replaceIndex === 'number';
+  const m=openSheet(
+    '<div class="sh-head"><span class="t">'+(isReplace?'Заменить продукт':'Выбрать продукт')+'</span>'+
+    '<button class="btn sm" id="pkNew"><svg><use href="#i-plus"/></svg>Продукт</button>'+
+    '<button class="iconbtn" data-x aria-label="Закрыть"><svg><use href="#i-x"/></svg></button></div>'+
+    '<div class="searchwrap"><svg><use href="#i-basket"/></svg><input id="pkSearch" placeholder="Поиск…" autocomplete="off"></div>'+
+    '<div class="card" id="pkList"></div>'
+  );
+  const draw=()=>{
+    const q=normName(m.el.querySelector('#pkSearch').value);
+    const items=state.products.filter(p=>!q||normName(p.name).includes(q));
+    const list=m.el.querySelector('#pkList');
+    list.innerHTML=items.length
+      ? items.map(p=>
+        '<div class="picker-row" style="border-bottom:1px solid var(--line)">'+
+        '<button class="row" data-pick="'+p.id+'" style="padding-right:48px"><div class="grow">'+
+        '<div class="l1"><span class="name">'+esc(p.name)+'</span><span class="kcal num">'+fmt1(kcal100(p))+'</span></div>'+
+        '<div class="l2 num"><b class="mp">Б '+fmt1(p.p)+'</b>&nbsp;&nbsp;<b class="mf">Ж '+fmt1(p.f)+'</b>&nbsp;&nbsp;<b class="mc">У '+fmt1(p.c)+'</b>&nbsp;&nbsp;· на 100 г</div></div></button>'+
+        '<button class="iconbtn p-edit" data-pedit="'+p.id+'" aria-label="Изменить"><svg><use href="#i-pen"/></svg></button></div>').join('')
+      : '<div class="empty"><p>'+(q?'Ничего не найдено':'Справочник пуст — добавьте продукт')+'</p></div>';
+    list.querySelectorAll('[data-pick]').forEach(b=>b.onclick=()=>{
+      const p=state.products.find(x=>x.id===b.dataset.pick);
+      if(isReplace){
+        const r=state.editDoc.rows[replaceIndex];
+        r.pid=p.id; r.name=p.name;
+        recalcRow(r, r.qty);
+        m.close(); renderEditorRows();
+      } else {
+        const row={ pid:p.id, name:p.name, qty:100, k:kcal100(p), p:round1(p.p), f:round1(p.f), c:round1(p.c) };
+        state.editDoc.rows.push(row);
+        m.close(); renderEditorRows();
+        editRowQty(state.editDoc.rows.length-1);
+      }
+    });
+    list.querySelectorAll('[data-pedit]').forEach(b=>b.onclick=()=>{
+      const p=state.products.find(x=>x.id===b.dataset.pedit);
+      m.close();
+      productForm(p, ()=>{ productPicker(isReplace?replaceIndex:undefined); });
+    });
+  };
+  m.el.querySelector('#pkSearch').addEventListener('input',draw);
+  m.el.querySelector('#pkNew').onclick=()=>{
+    m.close();
+    productForm(null, ()=>productPicker(isReplace?replaceIndex:undefined));
+  };
+  m.el.querySelector('[data-x]').onclick=m.close;
+  draw();
+}
+async function saveDoc(){
+  const ed=state.editDoc;
+  ed.date=$('#edDate').value||todayStr();
+  ed.time=$('#edTime').value||'';
+  ed.meal=$('#edMeal').value;
+  const doSave=async()=>{
+    if(ed.id){
+      const i=state.docs.findIndex(d=>d.id===ed.id);
+      state.docs[i]=JSON.parse(JSON.stringify(ed));
+    } else {
+      ed.id=uid();
+      state.docs.push(JSON.parse(JSON.stringify(ed)));
+    }
+    await persist();
+    $('#screen-editor').classList.remove('active');
+    state.journalDate=ed.date;
+    renderJournal();
+    toast('Документ сохранён','ok');
+  };
+  if(ed.date<todayStr()){
+    confirmDialog('Проверка даты','Попытка сохранить документ с НеСегодняшней датой. Действительно сохранить?', doSave, {ok:'Да', no:'Нет'});
+  } else {
+    doSave();
+  }
+}
+
+function computeReport(){
+  const from=$('#repFrom').value||todayStr();
+  const to=$('#repTo').value||todayStr();
+  const docs=state.docs.filter(d=>d.date>=from&&d.date<=to);
+  const prodMap={}; const dayMap={}; const docLines=[];
+  const sortedDocs=[...docs].sort((a,b)=>{
+    if(a.date!==b.date) return a.date<b.date?-1:1;
+    const ia=MEALS.indexOf(a.meal), ib=MEALS.indexOf(b.meal);
+    if(ia!==ib) return ia-ib;
+    const ta=a.time||'', tb=b.time||'';
+    if((ta==='')!==(tb==='')) return ta===''?-1:1;
+    return ta.localeCompare(tb);
+  });
+  const docGroups=[];
+  sortedDocs.forEach(d=>{
+    d.rows.forEach(r=>{
+      const k=r.pid;
+      if(!prodMap[k]) prodMap[k]={ name:r.name, qty:0, kcal:0, p:0, f:0, c:0 };
+      const o=prodMap[k];
+      o.qty+=+r.qty||0; o.kcal+=+r.k||0; o.p+=+r.p||0; o.f+=+r.f||0; o.c+=+r.c||0;
+    });
+    if(!dayMap[d.date]) dayMap[d.date]={ name:dmy(d.date)+' '+weekdayShort(d.date), date:d.date, qty:0, kcal:0, p:0, f:0, c:0 };
+    const dy=dayMap[d.date];
+    const t=sumRows(d.rows);
+    dy.qty+=t.qty; dy.kcal+=t.kcal; dy.p+=t.p; dy.f+=t.f; dy.c+=t.c;
+    docLines.push({ name:d.meal+' · '+dmy(d.date)+(d.time?' '+d.time:''), qty:t.qty, kcal:t.kcal, p:t.p, f:t.f, c:t.c });
+    let g=docGroups[docGroups.length-1];
+    if(!g || g.date!==d.date){ g={ date:d.date, dlist:[] }; docGroups.push(g); }
+    g.dlist.push(d);
+  });
+  const fin=(o)=>({ name:o.name, qty:round1(o.qty), kcal:round1(o.kcal), p:round1(o.p), f:round1(o.f), c:round1(o.c) });
+  const products=Object.values(prodMap).map(fin).sort((a,b)=>a.name.localeCompare(b.name,'ru'));
+  const days=Object.values(dayMap).map(fin).sort((a,b)=>a.date.localeCompare(b.date));
+  const totalRaw={ name:'Всего', qty:0, kcal:0, p:0, f:0, c:0 };
+  days.forEach(d=>{ totalRaw.qty+=d.qty; totalRaw.kcal+=d.kcal; totalRaw.p+=d.p; totalRaw.f+=d.f; totalRaw.c+=d.c; });
+  return { docs, docGroups, products, days, docLines, total:fin(totalRaw), dayCount:days.length };
+}
+function tcells(x){
+  return '<td>'+esc(x.name)+'</td><td class="num">'+fmt1(x.qty)+'</td><td class="ck num">'+fmt1(x.kcal)+'</td>'+
+    '<td class="num">'+fmt1(x.p)+'</td><td class="num">'+fmt1(x.f)+'</td><td class="num">'+fmt1(x.c)+'</td>';
+}
+function trow(x){ return '<tr>'+tcells(x)+'</tr>'; }
+function renderReport(){
+  const r=computeReport();
+  const body=$('#repBody');
+  const f={ pdet:$('#fProdDetail').checked, prod:$('#fProducts').checked, docs:$('#fDocs').checked, days:$('#fDays').checked, total:$('#fTotal').checked };
+  let html='';
+  if(!r.docs.length){
+    html='<tr><td colspan="6" style="text-align:center;color:var(--muted);padding:26px 10px;white-space:normal">Нет документов за выбранный период</td></tr>';
+  } else {
+    if(f.prod) html+='<tr class="sec"><td colspan="6">Итог по продуктам</td></tr>'+r.products.map(trow).join('');
+    if(f.docs){
+      r.docGroups.forEach(g=>{
+        const day={qty:0,kcal:0,p:0,f:0,c:0};
+        g.dlist.forEach(d=>{
+          html+='<tr class="dhead"><td colspan="6">'+esc(d.meal)+' · '+dmy(g.date)+(d.time?' · '+esc(d.time):'')+'</td></tr>';
+          if(f.pdet) d.rows.forEach(rr=>{ html+=trow({name:rr.name, qty:rr.qty, kcal:rr.k, p:rr.p, f:rr.f, c:rr.c}); });
+          const t=sumRows(d.rows);
+          day.qty+=t.qty; day.kcal+=t.kcal; day.p+=t.p; day.f+=t.f; day.c+=t.c;
+          html+='<tr class="dtotal">'+tcells({name:'Итог · '+d.meal, qty:t.qty, kcal:t.kcal, p:t.p, f:t.f, c:t.c})+'</tr>';
+        });
+        html+='<tr class="daytotal">'+tcells({name:'Итог за день · '+dmy(g.date), qty:round1(day.qty), kcal:round1(day.kcal), p:round1(day.p), f:round1(day.f), c:round1(day.c)})+'</tr>';
+      });
+    }
+    if(f.days) html+='<tr class="sec"><td colspan="6">Итоги по дням</td></tr>'+r.days.map(trow).join('');
+    if(f.total){
+      html+='<tr class="sec"><td colspan="6">Общие итоги</td></tr>';
+      if(r.dayCount){
+        const avg={ name:'Среднедневные', qty:round1(r.total.qty/r.dayCount), kcal:round1(r.total.kcal/r.dayCount),
+          p:round1(r.total.p/r.dayCount), f:round1(r.total.f/r.dayCount), c:round1(r.total.c/r.dayCount) };
+        html+='<tr class="avg">'+tcells(avg)+'</tr>';
+      }
+    }
+  }
+  body.innerHTML=html;
+}
+function reportText(){
+  const r=computeReport();
+  const f={ pdet:$('#fProdDetail').checked, prod:$('#fProducts').checked, docs:$('#fDocs').checked, days:$('#fDays').checked, total:$('#fTotal').checked };
+  const L=['# Отчёт DIETA · '+dmy($('#repFrom').value)+' — '+dmy($('#repTo').value)];
+  const line=(x)=>x.name+' — '+fmt1(x.qty)+' г — '+fmt1(x.kcal)+' ккал — Б '+fmt1(x.p)+' Ж '+fmt1(x.f)+' У '+fmt1(x.c);
+  if(f.prod){ L.push('','## Итог по продуктам'); r.products.forEach(x=>L.push('- '+line(x))); }
+  if(f.docs){
+    L.push('','## По документам');
+    r.docGroups.forEach(g=>{
+      g.dlist.forEach(d=>{
+        const t=sumRows(d.rows);
+        L.push('- '+line({name:d.meal+' · '+dmy(g.date)+(d.time?' '+d.time:''), qty:t.qty, kcal:t.kcal, p:t.p, f:t.f, c:t.c}));
+        if(f.pdet) d.rows.forEach(rr=>L.push('  - '+line({name:rr.name, qty:rr.qty, kcal:rr.k, p:rr.p, f:rr.f, c:rr.c})));
+      });
+    });
+  }
+  if(f.days){ L.push('','## Итоги по дням'); r.days.forEach(x=>L.push('- '+line(x))); }
+  if(f.total){
+    L.push('','## Общие итоги');
+    if(r.dayCount){
+      const avg={ name:'Среднедневные', qty:round1(r.total.qty/r.dayCount), kcal:round1(r.total.kcal/r.dayCount),
+        p:round1(r.total.p/r.dayCount), f:round1(r.total.f/r.dayCount), c:round1(r.total.c/r.dayCount) };
+      L.push('- '+line(avg)+' (дней с документами: '+r.dayCount+')');
+    }
+  }
+  return L.join('\n');
+}
+
+function fullBackup(){
+  return JSON.stringify({ app:'DIETA', version:APP_VERSION, date:todayStr(),
+    products:state.products, docs:state.docs, weights:state.weights, meals:MEALS, meta:state.meta }, null, 2);
+}
+function downloadFile(name, content, type){
+  const blob=new Blob([content],{type:type||'application/json'});
+  const url=URL.createObjectURL(blob);
+  const a=document.createElement('a');
+  a.href=url; a.download=name;
+  document.body.appendChild(a); a.click(); a.remove();
+  setTimeout(()=>URL.revokeObjectURL(url),4000);
+}
+let pendingImport=null;
+function pickFile(onText){
+  const fi=$('#fileInput');
+  fi.value='';
+  fi.onchange=()=>{
+    const file=fi.files[0];
+    if(!file) return;
+    const rd=new FileReader();
+    rd.onload=()=>onText(String(rd.result), file.name);
+    rd.readAsText(file);
+  };
+  fi.click();
+}
+function exportDB(){
+  downloadFile('dieta-db-'+todayStr()+'.json', fullBackup());
+  state.meta.lastBackup=todayStr();
+  persist().then(()=>toast('База выгружена','ok'));
+}
+function importDB(){
+  pickFile((text)=>{
+    let data;
+    try{ data=JSON.parse(text); }catch(e){ toast('Файл повреждён или не является базой DIETA','err'); return; }
+    if(!data || !Array.isArray(data.products) && !Array.isArray(data.docs)){ toast('Это не файл базы DIETA','err'); return; }
+    confirmDialog('Импорт базы','Текущая база будет <b>полностью заменена</b> данными из файла. Продолжить?', async()=>{
+      state.products=Array.isArray(data.products)?data.products:[];
+      state.docs=(data.docs||[]).map(d=>{
+        const dd=Object.assign({}, d);
+        dd.rows=(Array.isArray(d.rows)?d.rows:[]).map(x=>{ const y=Object.assign({}, x); if(y.k===undefined && y.kcal!==undefined) y.k=y.kcal; return y; });
+        return dd;
+      });
+      state.weights=Array.isArray(data.weights)?data.weights:[];
+      if(data.meta && typeof data.meta==='object') state.meta=Object.assign(state.meta,data.meta);
+      await persist(); renderAll();
+      toast('База импортирована','ok');
+    },{danger:true, ok:'Заменить'});
+  });
+}
+function exportProducts(){
+  downloadFile('dieta-products-'+todayStr()+'.json', JSON.stringify({ app:'DIETA-products', products:state.products }, null, 2));
+  toast('Продукты выгружены','ok');
+}
+const importFlags={ replaceAll:false, keepAll:false };
+function importProducts(){
+  pickFile((text)=>{
+    let data;
+    try{ data=JSON.parse(text); }catch(e){ toast('Файл повреждён','err'); return; }
+    const list=Array.isArray(data)?data:Array.isArray(data.products)?data.products:null;
+    if(!list){ toast('В файле нет списка продуктов','err'); return; }
+    const incoming=list.filter(p=>p&&p.name);
+    importFlags.replaceAll=false; importFlags.keepAll=false;
+    let added=0, replaced=0, skipped=0;
+    let i=0;
+    const next=async()=>{
+      while(i<incoming.length){
+        const p=incoming[i]; i++;
+        const nn=normName(p.name);
+        const ex=state.products.find(x=>normName(x.name)===nn);
+        const rec={ id:(ex?ex.id:uid()), name:String(p.name).slice(0,25), p:round1(p.p), f:round1(p.f), c:round1(p.c) };
+        rec.k=kcal100(rec);
+        if(!ex){ state.products.push(rec); added++; continue; }
+        if(importFlags.replaceAll){ const idx=state.products.indexOf(ex); state.products[idx]=rec; replaced++; continue; }
+        if(importFlags.keepAll){ skipped++; continue; }
+        pendingImport={ p:rec, ex, resume:next };
+        askConflict(rec.name);
+        return;
+      }
+      state.products.sort((a,b)=>a.name.localeCompare(b.name,'ru'));
+      await persist(); renderProducts();
+      toast('Импорт: добавлено '+added+', заменено '+replaced+(skipped?', пропущено '+skipped:''),'ok');
+    };
+    next();
+  });
+}
+function askConflict(name){
+  const m=openSheet(
+    '<div class="sh-head"><span class="t">Совпадение</span></div>'+
+    '<p style="font-size:14px;line-height:1.5;margin-bottom:16px">Продукт <b>'+esc(name)+'</b> уже есть в справочнике. Что сделать?</p>'+
+    '<div style="display:grid;gap:8px">'+
+    '<button class="btn block" data-a="replace">Заменить</button>'+
+    '<button class="btn ghost block" data-a="replaceAll">Заменить все</button>'+
+    '<button class="btn ghost block" data-a="keep">Оставить</button>'+
+    '<button class="btn ghost block" data-a="keepAll">Оставить все</button></div>',
+    {center:true}
+  );
+  m.el.querySelectorAll('[data-a]').forEach(b=>b.onclick=()=>{
+    const a=b.dataset.a; m.close();
+    const pi=pendingImport; pendingImport=null;
+    if(!pi) return;
+    if(a==='replace'){ const idx=state.products.indexOf(pi.ex); state.products[idx]=pi.p; }
+    if(a==='replaceAll'){ const idx=state.products.indexOf(pi.ex); state.products[idx]=pi.p; importFlags.replaceAll=true; }
+    if(a==='keepAll'){ importFlags.keepAll=true; }
+    pi.resume();
+  });
+}
+
+let svcView='menu';
+function renderService(){
+  const box=$('#svcArea');
+  if(svcView==='menu'){
+    box.innerHTML='<div class="card">'+
+      svcRow('i-db','', 'Виды приёмов пищи','Справочник (только чтение)', ()=>{svcView='meals';renderService();})+
+      svcRow('i-up','', 'Экспорт базы','JSON · все данные', exportDB)+
+      svcRow('i-down','', 'Импорт базы','Полная замена, с подтверждением', importDB)+
+      svcRow('i-up','', 'Экспорт продуктов','JSON · справочник', exportProducts)+
+      svcRow('i-down','', 'Импорт продуктов','Добавление к существующим', importProducts)+
+      svcRow('i-report','', 'Статистика','Показатели базы', ()=>{svcView='stats';renderService();})+
+      '</div>'+
+      '<p class="h-sub" style="margin-top:14px;text-align:center">DIETA v '+APP_VERSION+' · данные хранятся на этом устройстве</p>';
+  } else if(svcView==='meals'){
+    box.innerHTML='<button class="btn ghost sm" data-back style="margin-bottom:12px"><svg><use href="#i-chevl"/></svg>Назад</button>'+
+      '<div class="card">'+MEALS.map((m,i)=>'<div class="meal-chip"><span class="idx">'+(i+1)+'</span>'+esc(m)+'</div>').join('')+'</div>'+
+      '<p class="h-sub" style="margin-top:10px">Порядок видов фиксирован: Завтрак, Обед, Полдник, Ужин.</p>';
+    box.querySelector('[data-back]').onclick=()=>{svcView='menu';renderService();};
+  } else if(svcView==='stats'){
+    const m=state.meta;
+    box.innerHTML='<button class="btn ghost sm" data-back style="margin-bottom:12px"><svg><use href="#i-chevl"/></svg>Назад</button>'+
+      '<div class="card"><div class="stat-grid">'+
+      st('Продуктов в справочнике', String(state.products.length))+
+      st('Документов ПП', String(state.docs.length))+
+      st('Записей веса', String(state.weights.length))+
+      st('Дата последнего входа', m.lastLaunch?dmy(m.lastLaunch):'—')+
+      st('Дата последней резервной копии', m.lastBackup?dmy(m.lastBackup):'ещё не создавалась')+
+      st('Последнее сохранение', m.lastSave||'—')+
+      st('Хранилище', DB.useLS?'localStorage (резерв)':'IndexedDB')+
+      st('Версия', APP_VERSION)+
+      '</div></div>';
+    box.querySelector('[data-back]').onclick=()=>{svcView='menu';renderService();};
+  }
+}
+function svcRow(ico, warn, title, desc, fn){
+  const id='svc-'+uid();
+  setTimeout(()=>{ const el=document.getElementById(id); if(el) el.onclick=fn; },0);
+  return '<button class="svc-row" id="'+id+'"><span class="s-ico'+(warn?' warn':'')+'"><svg><use href="#'+ico+'"/></svg></span>'+
+    '<span class="grow"><span class="s-t">'+title+'</span><div class="s-d">'+desc+'</div></span>'+
+    '<svg style="color:var(--muted)"><use href="#i-chevr"/></svg></button>';
+}
+function st(k,v){ return '<div class="st"><span>'+k+'</span><b class="num">'+esc(v)+'</b></div>'; }
+
+function maybeAutoBackup(){
+  const m=state.meta;
+  const today=todayStr();
+  const lastBk=m.lastBackup||m.lastLaunch||today;
+  const days=(new Date(today)-new Date(lastBk))/86400000;
+  if(days>=7 && m.lastChange && m.lastChange>lastBk){
+    confirmDialog('Резервная копия','Прошло больше 7 дней с последней копии, а в базе есть изменения. Сохранить резервную копию сейчас?', ()=>{
+      downloadFile('dieta-db-'+today+'.json', fullBackup());
+      state.meta.lastBackup=today;
+      persist();
+    },{ok:'Сохранить', no:'Позже'});
+  }
+}
+
+const screens={ journal:$('#screen-journal'), report:$('#screen-report'), products:$('#screen-products'), weight:$('#screen-weight'), service:$('#screen-service') };
+const tabs=$$('.tab');
+let currentTab='journal';
+function applyTabbarMode(){
+  const landscape=window.matchMedia('(orientation: landscape)').matches;
+  document.body.classList.toggle('no-tabbar', landscape&&currentTab==='report');
+}
+function switchTab(name){
+  currentTab=name;
+  tabs.forEach(t=>t.classList.toggle('active', t.dataset.tab===name));
+  Object.keys(screens).forEach(k=>{
+    screens[k].classList.remove('active');
+    screens[k].style.display='none';
+  });
+  const activeScreen=screens[name];
+  activeScreen.classList.add('active');
+  activeScreen.style.display='block';
+  const tb=document.getElementById('totalsBar');
+  if(tb) tb.style.display=(name==='journal')?'':'none';
+  if(name==='report'){
+    $('#repFrom').value=state.journalDate; 
+    $('#repTo').value=state.journalDate;
+    renderReport();
+  }
+  if(name==='service'){ svcView='menu'; renderService(); }
+  if(name==='products') renderProducts();
+  if(name==='weight') renderWeights();
+  if(name==='journal') renderJournal();
+  applyTabbarMode();
+  window.scrollTo({top:0});
+}
+tabs.forEach(t=>t.onclick=()=>switchTab(t.dataset.tab));
+window.addEventListener('resize', applyTabbarMode);
+$('#repHome').onclick=()=>switchTab('journal');
+
+function onBeforeUnload(e){ e.preventDefault(); e.returnValue=''; }
+window.addEventListener('beforeunload', onBeforeUnload);
+
+window.addEventListener('pagehide', function(e) {
+    e.preventDefault();
+    sessionStorage.setItem('wasClosedWithUnsaved', 'true');
+});
+
+document.addEventListener('visibilitychange', function() {
+    if (document.visibilityState === 'hidden') {
+        if (typeof persist === 'function') {
+            persist();
+        }
+    }
+});
+
+if(window.matchMedia('(pointer: coarse)').matches){
+  let exitArmed=false;
+  try{ history.pushState({dietaGuard:1},''); }catch(e){}
+  window.addEventListener('popstate',()=>{
+    if(exitArmed) return;
+    try{ history.pushState({dietaGuard:1},''); }catch(e){}
+    confirmDialog('Выйти из приложения','Все изменения уже сохранены. Действительно закрыть DIETA?',()=>{
+      exitArmed=true;
+      window.removeEventListener('beforeunload', onBeforeUnload);
+      try{ history.back(); }catch(e){}
+    },{ok:'Выйти', no:'Остаться'});
+  });
+}
+
+function shiftDay(delta){
+  const d=new Date(state.journalDate+'T12:00:00');
+  d.setDate(d.getDate()+delta);
+  state.journalDate=todayStr(d);
+  renderJournal();
+}
+$('#jPrev').onclick=()=>shiftDay(-1);
+$('#jNext').onclick=()=>shiftDay(1);
+$('#jToday').onclick=()=>{ state.journalDate=todayStr(); renderJournal(); };
+$('#jDateInput').addEventListener('change',(e)=>{ if(e.target.value){ state.journalDate=e.target.value; renderJournal(); } });
+$('#jAdd').onclick=()=>newDoc();
+let touchX=null, touchY=null;
+$('#screen-journal').addEventListener('touchstart',(e)=>{ touchX=e.touches[0].clientX; touchY=e.touches[0].clientY; },{passive:true});
+$('#screen-journal').addEventListener('touchend',(e)=>{
+  if(touchX==null) return;
+  const dx=e.changedTouches[0].clientX-touchX;
+  const dy=e.changedTouches[0].clientY-touchY;
+  if(Math.abs(dx)>60 && Math.abs(dx)>Math.abs(dy)*1.5) shiftDay(dx<0?1:-1);
+  touchX=null; touchY=null;
+},{passive:true});
+$('#edClose').onclick=()=>$('#screen-editor').classList.remove('active');
+$('#edAddRow').onclick=()=>productPicker();
+$('#edSave').onclick=()=>saveDoc();
+
+$('#repFrom').value=todayStr();
+$('#repTo').value=todayStr();
+['repFrom','repTo'].forEach(id=>$('#'+id).addEventListener('change',renderReport));
+['fProdDetail','fProducts','fDocs','fDays','fTotal'].forEach(id=>$('#'+id).addEventListener('change',renderReport));
+$('#repFilterBtn').onclick=()=>{
+  const btn=$('#repFilterBtn'); const panel=$('#repFilters');
+  const open=panel.style.display==='none';
+  panel.style.display=open?'flex':'none';
+  btn.classList.toggle('active',open);
+};
+$('#repCopy').onclick=async()=>{
+  const txt=reportText();
+  let ok=false;
+  try{ await navigator.clipboard.writeText(txt); ok=true; }
+  catch(e){
+    try{
+      const ta=document.createElement('textarea'); ta.value=txt;
+      ta.style.position='fixed'; ta.style.opacity='0';
+      document.body.appendChild(ta); ta.select();
+      ok=document.execCommand('copy'); ta.remove();
+    }catch(e2){ ok=false; }
+  }
+  toast(ok?'Отчёт скопирован — можно вставить в чат с ИИ':'Не удалось скопировать', ok?'ok':'err');
+};
+$('#pAdd').onclick=()=>productForm(null, renderProducts);
+$('#pSearch').addEventListener('input', renderProducts);
+$('#wAdd').onclick=()=>weightForm(null);
+
+function renderAll(){
+  renderJournal(); renderProducts(); renderWeights(); renderService();
+}
+
+const withTimeout=(promise, ms)=>Promise.race([
+  promise,
+  new Promise((_, rej)=>setTimeout(()=>rej(new Error('storage timeout')), ms))
+]);
+function getSplash(){ return document.getElementById('d-splash'); }
+function killSplash(){
+  document.querySelectorAll('#d-splash').forEach(function(n){ n.classList.add('off'); });
+  setTimeout(function(){
+    document.querySelectorAll('#d-splash').forEach(function(n){ if(n.parentNode) n.parentNode.removeChild(n); });
+  },700);
+}
+async function boot(){
+  window.__dietaBoot='открываю хранилище';
+  try{ await withTimeout(DB.open(), 2000); }
+  catch(e){ DB.useLS=true; console.warn('IndexedDB недоступна — использую localStorage', e); }
+  try{
+    window.__dietaBoot='читаю данные';
+    const asArr=(x)=>Array.isArray(x)?x:[];
+    state.products=asArr(await DB.get('products','all'));
+    state.docs=asArr(await DB.get('docs','all'));
+    state.weights=asArr(await DB.get('weights','all'));
+    const metaRaw=await DB.get('meta','all');
+    state.meta=Object.assign(state.meta,(metaRaw&&typeof metaRaw==='object'&&!Array.isArray(metaRaw))?metaRaw:{});
+
+    window.__dietaBoot='сохраняю';
+    state.meta.lastLaunch=todayStr();
+    await writeAll();
+
+    if(state.docs.length){
+      const last=state.docs.map(d=>d.date).sort().pop();
+      if(last) state.journalDate=last;
+    }
+
+    window.__dietaBoot='рисую экраны';
+    renderAll();
+    switchTab('journal');
+
+    maybeAutoBackup();
+
+    window.__dietaBoot='готово';
+    killSplash(); setTimeout(killSplash,800); setTimeout(killSplash,2000);
+  }catch(err){
+    console.error('Ошибка запуска DIETA', err);
+    window.__dietaErrors.push('boot: '+(err&&err.message?err.message:String(err)));
+    const sp=getSplash();
+    if(sp) sp.innerHTML='<div style="max-width:280px;text-align:center;line-height:1.6;font-size:13px;padding:0 24px;color:var(--muted)">Не удалось запустить журнал.<br>Откройте страницу заново.</div>';
+  }
+}
+setTimeout(function(){
+  if(window.__DIETA_CLAIMED_VERSION!==APP_VERSION) return;
+  if(window.__DIETA_BOOTED) return;
+  window.__DIETA_BOOTED=APP_VERSION;
+  boot();
+},0);
+})();
+</script>
+
+<script>
+function __dietaKillAllSplash(){
+  document.querySelectorAll('#d-splash').forEach(function (n) { n.classList.add('off'); });
+  setTimeout(function () {
+    document.querySelectorAll('#d-splash').forEach(function (n) { if (n.parentNode) n.parentNode.removeChild(n); });
+  }, 700);
+}
+function __dietaDrawDiag(sp){
+  var stage = window.__dietaBoot || 'неизвестен';
+  var errs = (window.__dietaErrors || []).slice(0, 4).join('\n') || 'запуск не завершился за отведённое время';
+  sp.innerHTML =
+    '<div style="max-width:320px;text-align:left;line-height:1.55;font-size:12px;color:#4a5a42;padding:0 24px">' +
+    '<div style="font-weight:800;font-size:15px;color:#b5453a;margin-bottom:8px">Не удалось запустить журнал</div>' +
+    '<div style="margin-bottom:6px">Этап запуска: <b>' + stage + '</b></div>' +
+    '<div style="font-family:monospace;font-size:11px;background:#fbf8ef;border:1px solid #e0d8c2;border-radius:8px;padding:8px 10px;white-space:pre-wrap;word-break:break-word">' + errs + '</div>' +
+    '<div style="margin-top:6px;font-size:11px;color:#71805f">Скрипт-блоки, символов: ' + (window.__dietaScriptInfo ? window.__dietaScriptInfo() : '?') + ' (у здорового файла — 3 блока)</div>' +
+    '<div style="margin-top:8px;color:#71805f">Скопируйте текст выше и отправьте разработчику.</div>' +
+    '</div>';
+}
+function __dietaCheck(retries){
+  var launched = (window.__dietaBoot === 'готово') || document.querySelector('.screen.active');
+  if (launched) { __dietaKillAllSplash(); return; }
+  var sp = document.getElementById('d-splash');
+  var hasErr = (window.__dietaErrors || []).length > 0;
+  if (hasErr && sp) { __dietaDrawDiag(sp); return; }
+  if (retries > 0) { setTimeout(function(){ __dietaCheck(retries-1); }, 3000); }
+  else if (sp) { __dietaDrawDiag(sp); }
+}
+setTimeout(function(){ __dietaCheck(8); }, 6000);
+</script>
+
+<script>
+if ('serviceWorker' in navigator) {
+  navigator.serviceWorker.register('service-worker.js').catch(function(err) {
+    console.log('Service Worker registration failed:', err);
+  });
+}
+</script>
+</body>
+</html>
