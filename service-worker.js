@@ -1,4 +1,4 @@
-const CACHE_NAME = 'dieta-v25';
+const CACHE_NAME = 'dieta-v27';
 const urlsToCache = [
   './',
   './index.html',
