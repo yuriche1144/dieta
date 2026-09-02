@@ -2,16 +2,17 @@
 <html lang="ru">
 <head>
 <meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover, user-scalable=no">
 <meta name="color-scheme" content="light">
 <meta name="theme-color" content="#24301f">
+<meta name="mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-status-bar-style" content="default">
 <meta name="apple-mobile-web-app-title" content="DIETA">
 <link rel="manifest" href="manifest.json">
 <link rel="icon" type="image/png" sizes="512x512" href="icon-512.png">
 <link rel="apple-touch-icon" href="icon-512.png">
-<title>DIETA 1.0.25 — журнал питания и веса</title>
+<title>DIETA 1.0.26 — журнал питания и веса</title>
 <style>
 :root{
   --bg:#f4efe2; --surface:#fbf8ef; --surface2:#efe8d6; --ink:#24301f; --muted:#71805f;
@@ -20,7 +21,7 @@
   --tab-h:calc(60px + env(safe-area-inset-bottom));
 }
 *{margin:0;padding:0;box-sizing:border-box;-webkit-tap-highlight-color:transparent}
-html,body{height:100%}
+html,body{height:100%;overscroll-behavior:none;-webkit-overflow-scrolling:touch}
 body{
   background:var(--bg);color:var(--ink);
   font-family:"Avenir Next","Segoe UI",system-ui,-apple-system,sans-serif;
@@ -39,17 +40,18 @@ body::before{
     repeating-linear-gradient(0deg, rgba(62,124,70,.035) 0 1px, transparent 1px 34px);
 }
 
-#app{max-width:min(520px,100% - 20px);margin:0 auto;min-height:100dvh;display:flex;flex-direction:column}
-main{flex:1;padding:18px 0 calc(var(--tab-h) + 40px)}
+#app{max-width:min(520px,100% - 20px);margin:0 auto;min-height:100dvh;display:flex;flex-direction:column;padding-top:env(safe-area-inset-top);padding-bottom:env(safe-area-inset-bottom)}
+main{flex:1;padding:18px 0 calc(var(--tab-h) + 20px + env(safe-area-inset-bottom))}
 .screen{display:none}
 .screen.active{display:block;animation:fadeUp .3s ease both}
+.screen.flex-active{display:flex;flex-direction:column;height:100%}
 @keyframes fadeUp{from{opacity:0;transform:translateY(10px)}}
 @keyframes rowIn{from{opacity:0;transform:translateY(6px)}}
 .row-anim{animation:rowIn .3s ease both}
 
 .h-title{font-size:26px;font-weight:800;letter-spacing:-.02em;margin:2px 0 4px}
 .h-sub{font-size:12.5px;color:var(--muted);font-weight:600;letter-spacing:.02em}
-.h-row{display:flex;align-items:center;justify-content:space-between;gap:10px;margin:2px 0 12px}
+.h-row{display:flex;align-items:center;justify-content:space-between;gap:10px;margin:2px 0 12px;flex-shrink:0}
 .h-row .h-title{margin:0}
 
 .card{background:var(--surface);border:1px solid var(--line);border-radius:var(--r);box-shadow:0 1px 2px rgba(36,48,31,.05)}
@@ -103,7 +105,7 @@ main{flex:1;padding:18px 0 calc(var(--tab-h) + 40px)}
 .rep-headbtns{display:flex;align-items:center;gap:8px}
 .rep-headbtns .btn#repFilterBtn svg{transition:transform .25s}
 .rep-headbtns .btn#repFilterBtn.active svg{transform:rotate(90deg)}
-.rep-filters{background:var(--surface);border:1px solid var(--line);border-radius:var(--r);padding:12px;margin-bottom:12px;display:flex;flex-direction:column;gap:12px}
+.rep-filters{background:var(--surface);border:1px solid var(--line);border-radius:var(--r);padding:12px;margin-bottom:12px;display:flex;flex-direction:column;gap:12px;flex-shrink:0}
 .rep-period{display:flex;align-items:center;flex-wrap:nowrap;gap:4px}
 .rep-period .rt-label{font-size:11px;color:var(--muted);font-weight:700}
 .rep-period input[type=date]{border:1px solid var(--line);border-radius:8px;padding:6px 4px;font-size:13px;background:var(--surface2);font-variant-numeric:tabular-nums;width:100%;max-width:105px;flex:1;text-align:center}
@@ -111,7 +113,7 @@ main{flex:1;padding:18px 0 calc(var(--tab-h) + 40px)}
 .rep-checks label{display:inline-flex;align-items:center;gap:6px;font-size:12.5px;font-weight:600;background:var(--bg);border:1px solid var(--line);border-radius:999px;padding:6px 12px;cursor:pointer;white-space:nowrap;transition:border-color .15s,background .15s}
 .rep-checks label:hover{border-color:var(--green)}
 .rep-checks input{accent-color:var(--green)}
-.report-wrap{background:var(--surface);border:1px solid var(--line);border-radius:var(--r);overflow:auto;height:calc(100dvh - var(--tab-h) - 190px);min-height:280px;position:relative}
+.report-wrap{background:var(--surface);border:1px solid var(--line);border-radius:var(--r);overflow:auto;flex:1;min-height:200px;position:relative}
 .tbl{width:100%;border-collapse:collapse;font-size:13px}
 .tbl th{position:sticky;top:0;z-index:6;background:var(--green-deep);color:#eef4e8;font-size:10.5px;font-weight:800;letter-spacing:.03em;text-transform:uppercase;padding:7px 6px;text-align:right;white-space:nowrap}
 .tbl th:first-child{text-align:left}
@@ -128,10 +130,8 @@ main{flex:1;padding:18px 0 calc(var(--tab-h) + 40px)}
 }
 @media (orientation:landscape){
   #app{max-width:min(720px,100%)}
-  .report-wrap{height:calc(100dvh - var(--tab-h) - 150px)}
   body.no-tabbar #tabbar{display:none}
   body.no-tabbar main{padding-bottom:16px}
-  body.no-tabbar .report-wrap{height:calc(100dvh - 150px)}
 }
 
 #screen-editor{position:fixed;inset:0;z-index:60;background:var(--bg);display:none;flex-direction:column}
@@ -227,7 +227,7 @@ main{flex:1;padding:18px 0 calc(var(--tab-h) + 40px)}
 <div id="d-splash">
   <div class="s-logo">DIETA<b>.</b></div>
   <div class="s-sub">журнал питания</div>
-  <div class="s-ver">v 1.0.25</div>
+  <div class="s-ver">v 1.0.26</div>
   <div class="s-cursor"></div>
 </div>
 
@@ -277,7 +277,7 @@ main{flex:1;padding:18px 0 calc(var(--tab-h) + 40px)}
     <div id="jList"></div>
   </section>
 
-  <section class="screen" id="screen-report">
+  <section class="screen" id="screen-report" style="display:flex;flex-direction:column;height:100%">
     <div class="h-row">
       <h1 class="h-title">Отчёт</h1>
       <div class="rep-headbtns">
@@ -375,7 +375,7 @@ window.__dietaScriptInfo = window.__dietaScriptInfo || function(){
 };
 (function () {
 'use strict';
-var APP_VERSION = '1.0.25';
+var APP_VERSION = '1.0.26';
 var CLAIMED = window.__DIETA_CLAIMED_VERSION;
 function verGT(a,b){ var pa=a.split('.').map(Number), pb=b.split('.').map(Number);
   for(var i=0;i<3;i++){ if((pa[i]||0)>(pb[i]||0)) return true; if((pa[i]||0)<(pb[i]||0)) return false; } return false; }
@@ -1181,7 +1181,19 @@ function applyTabbarMode(){
 function switchTab(name){
   currentTab=name;
   tabs.forEach(t=>t.classList.toggle('active', t.dataset.tab===name));
-  Object.keys(screens).forEach(k=>screens[k].classList.toggle('active', k===name));
+  Object.keys(screens).forEach(k=>{
+    if(k===name){
+      if(k==='report'){
+        screens[k].style.display='flex';
+        screens[k].style.flexDirection='column';
+        screens[k].style.height='100%';
+      } else {
+        screens[k].style.display='block';
+      }
+    } else {
+      screens[k].style.display='none';
+    }
+  });
   const tb=document.getElementById('totalsBar');
   if(tb) tb.style.display=(name==='journal')?'':'none';
   if(name==='report'){
