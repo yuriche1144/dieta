@@ -1,17 +1,8 @@
 {
-  "name": "DIETA - Журнал питания",
+  "name": "DIETA",
   "short_name": "DIETA",
-  "description": "Журнал учёта питания и веса",
   "start_url": ".",
   "display": "standalone",
   "background_color": "#f4efe2",
-  "theme_color": "#24301f",
-  "orientation": "portrait-primary",
-  "icons": [
-    {
-      "src": "./icon-512.png",
-      "sizes": "512x512",
-      "type": "image/png"
-    }
-  ]
+  "theme_color": "#24301f"
 }
