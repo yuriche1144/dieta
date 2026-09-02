@@ -2,7 +2,7 @@
   "name": "DIETA - Журнал питания",
   "short_name": "DIETA",
   "description": "Журнал учёта питания и веса",
-  "start_url": "/dieta/",
+  "start_url": ".",
   "display": "standalone",
   "background_color": "#f4efe2",
   "theme_color": "#24301f",
