@@ -1,15 +1,16 @@
-const CACHE_NAME = 'dieta-v1';
+const CACHE_NAME = 'dieta-v25';
 const urlsToCache = [
-  '/',
-  '/index.html',
-  '/manifest.json',
-  '/icon-512.png'
+  '/dieta/',
+  '/dieta/index.html',
+  '/dieta/manifest.json',
+  '/dieta/icon-512.png'
 ];
 
 self.addEventListener('install', event => {
   event.waitUntil(
     caches.open(CACHE_NAME)
       .then(cache => cache.addAll(urlsToCache))
+      .catch(err => console.log('Cache install failed:', err))
   );
 });
 
@@ -31,5 +32,6 @@ self.addEventListener('fetch', event => {
   event.respondWith(
     caches.match(event.request)
       .then(response => response || fetch(event.request))
+      .catch(() => fetch(event.request))
   );
 });
