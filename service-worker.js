@@ -1,9 +1,9 @@
 const CACHE_NAME = 'dieta-v25';
 const urlsToCache = [
-  '/dieta/',
-  '/dieta/index.html',
-  '/dieta/manifest.json',
-  '/dieta/icon-512.png'
+  './',
+  './index.html',
+  './manifest.json',
+  './icon-512.png'
 ];
 
 self.addEventListener('install', event => {
