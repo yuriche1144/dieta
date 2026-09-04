@@ -807,7 +807,8 @@ function productPicker(replaceIndex){
       const q=100;
       const row={ pid:p.id, name:p.name, qty:q,
         k:round1(kcal100(p)*q/100), p:round1(p.p*q/100), f:round1(p.f*q/100), c:round1(p.c*q/100) };
-      m.close();
+      inp.blur();
+	  m.close();
       if(isReplace){
         state.editDoc.rows[replaceIndex]=row;
       } else {
@@ -817,7 +818,7 @@ function productPicker(replaceIndex){
     });
   };
   inp.addEventListener('input',render);
-  m.el.querySelector('[data-x]').onclick=m.close;
+  m.el.querySelector('[data-x]').onclick=()=>{ inp.blur(); m.close(); };
   m.el.querySelector('#pkNew').onclick=()=>{
     m.close();
     productForm(null, ()=>{
