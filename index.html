@@ -199,9 +199,12 @@ main{flex:1;padding:18px 0 calc(var(--tab-h) + 20px + env(safe-area-inset-bottom
 .meal-chip .idx{width:26px;height:26px;border-radius:8px;background:var(--green-soft);color:var(--green-deep);font-size:12px;font-weight:800;display:flex;align-items:center;justify-content:center}
 
 #modals .overlay{position:fixed;inset:0;z-index:70;background:rgba(36,48,31,.45);display:flex;align-items:flex-end;justify-content:center;animation:fadein .18s ease}
+#modals .overlay.top{align-items:flex-start}
 @keyframes fadein{from{opacity:0}}
 #modals .sheet{width:min(520px,100%);max-height:88dvh;overflow-y:auto;background:var(--surface);border-radius:18px 18px 0 0;padding:16px 16px calc(16px + env(safe-area-inset-bottom));animation:slideup .28s cubic-bezier(.2,1,.3,1)}
+#modals .sheet.top{border-radius:0 0 18px 18px;max-height:100dvh;margin-top:env(safe-area-inset-top);animation:slidedown .28s cubic-bezier(.2,1,.3,1)}
 @keyframes slideup{from{transform:translateY(40px);opacity:.4}}
+@keyframes slidedown{from{transform:translateY(-40px);opacity:.4}}
 #modals .sheet.raised{margin-bottom:140px}
 #modals .overlay.center{align-items:center;padding:20px}
 #modals .sheet.center{border-radius:18px;max-height:80dvh}
@@ -500,8 +503,10 @@ function openSheet(html, opts){
   opts=opts||{};
   const box=$('#modals');
   const ov=document.createElement('div');
-  ov.className='overlay'+(opts.center?' center':'');
-  ov.innerHTML='<div class="sheet'+(opts.center?' center':'')+(opts.cls?' '+opts.cls:'')+'" role="dialog" aria-modal="true">'+html+'</div>';
+  const cls='overlay'+(opts.center?' center':'')+(opts.top?' top':'');
+  const scls='sheet'+(opts.center?' center':'')+(opts.top?' top':'')+(opts.cls?' '+opts.cls:'');
+  ov.className=cls;
+  ov.innerHTML='<div class="'+scls+'" role="dialog" aria-modal="true">'+html+'</div>';
   box.appendChild(ov);
   const close=()=>{ ov.style.opacity='0'; ov.style.transition='opacity .18s'; setTimeout(()=>ov.remove(),190); };
   ov.addEventListener('click',(e)=>{ if(e.target===ov && !opts.persistent) close(); });
@@ -757,4 +762,372 @@ function copyDoc(docId){
       return { pid:p.id, name:p.name, qty:round1(q),
         k:round1(kcal100(p)*q/100), p:round1(p.p*q/100), f:round1(p.f*q/100), c:round1(p.c*q/100) };
     }
-    return { pid:r.pid, name:r.name, qty:round1(q), k:round1(r.k), p:round1(r.p), f:round
+    return { pid:r.pid, name:r.name, qty:round1(q), k:round1(r.k), p:round1(r.p), f:round1(r.f), c:round1(r.c) };
+  });
+  const ndoc={ id:uid(), date:src.date, time:src.time, meal:src.meal, createdAt:Date.now(), rows };
+  state.docs.push(ndoc);
+  persist(); renderJournal();
+  toast('Документ скопирован','ok');
+}
+function deleteDoc(docId){
+  confirmDialog('Удалить документ','Удалить документ <b>'+esc(state.docs.find(d=>d.id===docId).meal)+'</b>?', async()=>{
+    state.docs=state.docs.filter(d=>d.id!==docId);
+    await persist(); renderJournal();
+    toast('Документ удалён','ok');
+  },{danger:true, ok:'Удалить'});
+}
+
+function productPicker(replaceIndex){
+  const isReplace = typeof replaceIndex === 'number';
+  const m=openSheet(
+    '<div class="sh-head"><span class="t">'+(isReplace?'Заменить продукт':'Выбрать продукт')+'</span>'+
+    '<button class="btn sm" id="pkNew"><svg><use href="#i-plus"/></svg>Продукт</button>'+
+    '<button class="iconbtn" data-x aria-label="Закрыть"><svg><use href="#i-x"/></svg></button></div>'+
+    '<div class="searchwrap"><svg><use href="#i-basket"/></svg><input id="pkSearch" placeholder="Поиск…" autocomplete="off"></div>'+
+    '<div class="card" id="pkList"></div>',
+    {top:true}
+  );
+  const inp=m.el.querySelector('#pkSearch');
+  const list=m.el.querySelector('#pkList');
+  const render=()=>{
+    const q=normName(inp.value);
+    const items=state.products.filter(p=>!q||normName(p.name).includes(q));
+    if(!items.length){
+      list.innerHTML='<div class="empty"><h3>'+(q?'Ничего не найдено':'Справочник пуст')+'</h3><p>'+(q?'Попробуйте другой запрос':'Добавьте первый продукт')+'</p></div>';
+      return;
+    }
+    list.innerHTML=items.map(p=>
+      '<button class="row" data-pid="'+p.id+'"><div class="grow">'+
+      '<div class="l1"><span class="name">'+esc(p.name)+'</span><span class="kcal num">'+fmt1(kcal100(p))+'</span></div>'+
+      '<div class="l2 num"><b class="mp">Б '+fmt1(p.p)+'</b>&nbsp;&nbsp;<b class="mf">Ж '+fmt1(p.f)+'</b>&nbsp;&nbsp;<b class="mc">У '+fmt1(p.c)+'</b></div></div>'+
+      '<svg style="color:var(--muted)"><use href="#i-chevr"/></svg></button>').join('');
+    list.querySelectorAll('[data-pid]').forEach(b=>b.onclick=()=>{
+      const p=state.products.find(x=>x.id===b.dataset.pid);
+      if(!p) return;
+      const q=100;
+      const row={ pid:p.id, name:p.name, qty:q,
+        k:round1(kcal100(p)*q/100), p:round1(p.p*q/100), f:round1(p.f*q/100), c:round1(p.c*q/100) };
+	  m.close();
+      if(isReplace){
+        state.editDoc.rows[replaceIndex]=row;
+      } else {
+        state.editDoc.rows.push(row);
+      }
+      renderEditor();
+    });
+  };
+  inp.addEventListener('input',render);
+  m.el.querySelector('[data-x]').onclick=m.close;
+  m.el.querySelector('#pkNew').onclick=()=>{
+    m.close();
+    productForm(null, ()=>{
+      setTimeout(()=>productPicker(replaceIndex),100);
+    });
+  };
+  render();
+  setTimeout(()=>inp.focus(),80);
+}
+
+function renderEditor(){
+  const doc=state.editDoc;
+  if(!doc) return;
+  $('#edTitle').textContent=doc.meal||'Документ';
+  $('#edDate').value=doc.date;
+  $('#edTime').value=doc.time||'';
+  const sel=$('#edMeal');
+  sel.innerHTML=MEALS.map(m=>'<option value="'+m+'"'+(m===doc.meal?' selected':'')+'>'+m+'</option>').join('');
+  const box=$('#edRows');
+  if(!doc.rows.length){
+    box.innerHTML='<div class="empty"><div class="e-ico"><svg><use href="#i-basket"/></svg></div><h3>Продукты не добавлены</h3><p>Нажмите "Продукт" чтобы добавить</p></div>';
+  } else {
+    box.innerHTML=doc.rows.map((r,i)=>{
+      const t={k:round1(r.k||0),p:round1(r.p||0),f:round1(r.f||0),c:round1(r.c||0)};
+      return '<div style="position:relative;border-bottom:1px solid var(--line)">'+
+        '<div class="row" style="padding-right:88px"><div class="grow">'+
+        '<div class="l1"><span class="name">'+esc(r.name)+'</span><span class="kcal num">'+fmt1(t.k)+'</span></div>'+
+        '<div class="l2 num"><b>'+fmt1(r.qty)+' г</b>&nbsp;&nbsp;'+
+        '<b class="mp">Б '+fmt1(t.p)+'</b>&nbsp;&nbsp;<b class="mf">Ж '+fmt1(t.f)+'</b>&nbsp;&nbsp;<b class="mc">У '+fmt1(t.c)+'</b></div></div></div>'+
+        '<button class="iconbtn" data-swap="'+i+'" style="position:absolute;right:44px;top:50%;transform:translateY(-50%)" aria-label="Заменить"><svg><use href="#i-swap"/></svg></button>'+
+        '<button class="iconbtn" data-del="'+i+'" style="position:absolute;right:6px;top:50%;transform:translateY(-50%);color:var(--red)" aria-label="Удалить"><svg><use href="#i-trash"/></svg></button>'+
+        '</div>';
+    }).join('');
+    box.querySelectorAll('[data-swap]').forEach(b=>b.onclick=()=>productPicker(+b.dataset.swap));
+    box.querySelectorAll('[data-del]').forEach(b=>b.onclick=()=>{
+      doc.rows.splice(+b.dataset.del,1);
+      renderEditor();
+    });
+  }
+  const t=sumRows(doc.rows);
+  $('#edTotal').textContent=fmt1(t.kcal)+' ккал';
+}
+
+function openEditor(docId){
+  const doc=state.docs.find(d=>d.id===docId);
+  if(!doc) return;
+  state.editDoc=doc;
+  $('#screen-editor').classList.add('active');
+  renderEditor();
+}
+function newDoc(){
+  const doc={ id:uid(), date:state.journalDate, time:nowHM(), meal:MEALS[0], createdAt:Date.now(), rows:[] };
+  state.docs.push(doc);
+  state.editDoc=doc;
+  $('#screen-editor').classList.add('active');
+  renderEditor();
+}
+
+$('#edClose').onclick=()=>{ $('#screen-editor').classList.remove('active'); state.editDoc=null; renderJournal(); };
+$('#edAddRow').onclick=()=>productPicker();
+$('#edSave').onclick=async()=>{
+  const doc=state.editDoc;
+  if(!doc) return;
+  doc.date=$('#edDate').value;
+  doc.time=$('#edTime').value;
+  doc.meal=$('#edMeal').value;
+  await persist();
+  $('#screen-editor').classList.remove('active');
+  state.editDoc=null;
+  renderJournal();
+  toast('Документ сохранён','ok');
+};
+
+$('#jPrev').onclick=()=>{ const d=new Date(state.journalDate+'T12:00:00'); d.setDate(d.getDate()-1); state.journalDate=todayStr(d); renderJournal(); };
+$('#jNext').onclick=()=>{ const d=new Date(state.journalDate+'T12:00:00'); d.setDate(d.getDate()+1); state.journalDate=todayStr(d); renderJournal(); };
+$('#jToday').onclick=()=>{ state.journalDate=todayStr(); renderJournal(); };
+$('#jDateInput').onchange=(e)=>{ state.journalDate=e.target.value; renderJournal(); };
+$('#jAdd').onclick=()=>newDoc();
+
+$('#pAdd').onclick=()=>productForm(null, renderProducts);
+$('#pSearch').addEventListener('input',renderProducts);
+
+$('#wAdd').onclick=()=>weightForm(null);
+
+$$('.tab').forEach(t=>t.onclick=()=>{
+  $$('.tab').forEach(x=>x.classList.remove('active'));
+  t.classList.add('active');
+  $$('.screen').forEach(s=>s.classList.remove('active'));
+  $('#screen-'+t.dataset.tab).classList.add('active');
+  if(t.dataset.tab==='report') renderReport();
+  if(t.dataset.tab==='products') renderProducts();
+  if(t.dataset.tab==='weight') renderWeights();
+  if(t.dataset.tab==='service') renderService();
+});
+
+function renderService(){
+  const box=$('#svcArea');
+  box.innerHTML=''+
+    '<div class="card">'+
+    '<button class="svc-row" data-act="export"><div class="s-ico"><svg><use href="#i-copy"/></svg></div><div class="grow"><div class="s-t">Экспорт базы</div><div class="s-d">Скачать JSON-файл со всеми данными</div></div></button>'+
+    '<button class="svc-row" data-act="import"><div class="s-ico"><svg><use href="#i-db"/></svg></div><div class="grow"><div class="s-t">Импорт базы</div><div class="s-d">Загрузить данные из JSON-файла</div></div></button>'+
+    '<button class="svc-row" data-act="backup"><div class="s-ico"><svg><use href="#i-copy"/></svg></div><div class="grow"><div class="s-t">Резервная копия</div><div class="s-d">Сохранить полную копию базы</div></div></button>'+
+    '<button class="svc-row" data-act="reset"><div class="s-ico warn"><svg><use href="#i-trash"/></svg></div><div class="grow"><div class="s-t">Сбросить базу</div><div class="s-d">Удалить все данные приложения</div></div></button>'+
+    '</div>'+
+    '<div class="card" style="margin-top:12px">'+
+    '<div class="stat-grid">'+
+    '<div class="st"><b>Версия</b><span>'+APP_VERSION+'</span></div>'+
+    '<div class="st"><b>Продуктов</b><span>'+state.products.length+'</span></div>'+
+    '<div class="st"><b>Документов</b><span>'+state.docs.length+'</span></div>'+
+    '<div class="st"><b>Записей веса</b><span>'+state.weights.length+'</span></div>'+
+    '<div class="st"><b>Последнее сохранение</b><span>'+(state.meta.lastSave||'—')+'</span></div>'+
+    '</div></div>';
+  box.querySelectorAll('[data-act]').forEach(b=>b.onclick=()=>{
+    const act=b.dataset.act;
+    if(act==='export') exportDB();
+    if(act==='import') importDB();
+    if(act==='backup') backupDB();
+    if(act==='reset') resetDB();
+  });
+}
+
+function exportDB(){
+  const data={
+    app:'DIETA', version:APP_VERSION, date:todayStr(),
+    products:state.products, docs:state.docs, weights:state.weights,
+    meals:MEALS, meta:state.meta
+  };
+  const blob=new Blob([JSON.stringify(data,null,2)],{type:'application/json'});
+  const url=URL.createObjectURL(blob);
+  const a=document.createElement('a');
+  a.href=url; a.download='dieta-db-'+todayStr()+'.json';
+  document.body.appendChild(a); a.click(); a.remove();
+  URL.revokeObjectURL(url);
+  toast('База экспортирована','ok');
+}
+
+function importDB(){
+  const inp=$('#fileInput');
+  inp.onchange=async(e)=>{
+    const f=e.target.files[0];
+    if(!f) return;
+    const text=await f.text();
+    try{
+      const data=JSON.parse(text);
+      if(!data.products && !data.docs){ toast('Это не файл базы DIETA','err'); return; }
+      confirmDialog('Импорт базы','Заменить все текущие данные данными из файла?', async()=>{
+        state.products=data.products||[];
+        state.docs=data.docs||[];
+        state.weights=data.weights||[];
+        state.meta=data.meta||state.meta;
+        await persist();
+        renderJournal(); renderProducts(); renderWeights(); renderService();
+        toast('База импортирована','ok');
+      },{ok:'Импортировать'});
+    }catch(err){ toast('Ошибка чтения файла','err'); }
+    inp.value='';
+  };
+  inp.click();
+}
+
+function backupDB(){
+  const data={
+    app:'DIETA', version:APP_VERSION, date:todayStr(),
+    products:state.products, docs:state.docs, weights:state.weights,
+    meals:MEALS, meta:state.meta
+  };
+  const blob=new Blob([JSON.stringify(data,null,2)],{type:'application/json'});
+  const url=URL.createObjectURL(blob);
+  const a=document.createElement('a');
+  a.href=url; a.download='dieta-backup-'+todayStr()+'.json';
+  document.body.appendChild(a); a.click(); a.remove();
+  URL.revokeObjectURL(url);
+  state.meta.lastBackup=todayStr();
+  persist();
+  toast('Резервная копия создана','ok');
+}
+
+function resetDB(){
+  confirmDialog('Сбросить базу','Удалить ВСЕ данные приложения? Это действие необратимо.', async()=>{
+    state.products=[]; state.docs=[]; state.weights=[];
+    state.meta={lastLaunch:null,lastBackup:null,lastChange:null,lastSave:null};
+    await persist();
+    renderJournal(); renderProducts(); renderWeights(); renderService();
+    toast('База сброшена','ok');
+  },{danger:true, ok:'Сбросить', no:'Отмена'});
+}
+
+async function renderReport(){
+  const from=$('#repFrom').value;
+  const to=$('#repTo').value;
+  const showProdDetail=$('#fProdDetail').checked;
+  const showProducts=$('#fProducts').checked;
+  const showDocs=$('#fDocs').checked;
+  const showDays=$('#fDays').checked;
+  const showTotal=$('#fTotal').checked;
+  
+  let docs=state.docs;
+  if(from) docs=docs.filter(d=>d.date>=from);
+  if(to) docs=docs.filter(d=>d.date<=to);
+  
+  const body=$('#repBody');
+  let html='';
+  
+  if(showProdDetail){
+    html+='<tr class="sec"><td colspan="6">Продукты в документах</td></tr>';
+    docs.forEach(d=>{
+      html+='<tr class="dhead"><td colspan="6">'+esc(d.meal)+' · '+dmy(d.date)+(d.time?' '+d.time:'')+'</td></tr>';
+      d.rows.forEach(r=>{
+        html+='<tr><td>'+esc(r.name)+'</td><td class="num">'+fmt1(r.qty)+'</td><td class="num ck">'+fmt1(r.k)+'</td><td class="num">'+fmt1(r.p)+'</td><td class="num">'+fmt1(r.f)+'</td><td class="num">'+fmt1(r.c)+'</td></tr>';
+      });
+      const t=sumRows(d.rows);
+      html+='<tr class="dtotal"><td>Итого</td><td class="num">'+fmt1(t.qty)+'</td><td class="num ck">'+fmt1(t.kcal)+'</td><td class="num">'+fmt1(t.p)+'</td><td class="num">'+fmt1(t.f)+'</td><td class="num">'+fmt1(t.c)+'</td></tr>';
+    });
+  }
+  
+  if(showProducts){
+    html+='<tr class="sec"><td colspan="6">Итог по продуктам</td></tr>';
+    const prodMap={};
+    docs.forEach(d=>d.rows.forEach(r=>{
+      if(!prodMap[r.pid]) prodMap[r.pid]={name:r.name,qty:0,k:0,p:0,f:0,c:0};
+      prodMap[r.pid].qty+=+r.qty||0;
+      prodMap[r.pid].k+=+r.k||0;
+      prodMap[r.pid].p+=+r.p||0;
+      prodMap[r.pid].f+=+r.f||0;
+      prodMap[r.pid].c+=+r.c||0;
+    }));
+    Object.values(prodMap).sort((a,b)=>b.k-a.k).forEach(p=>{
+      html+='<tr><td>'+esc(p.name)+'</td><td class="num">'+fmt1(p.qty)+'</td><td class="num ck">'+fmt1(p.k)+'</td><td class="num">'+fmt1(p.p)+'</td><td class="num">'+fmt1(p.f)+'</td><td class="num">'+fmt1(p.c)+'</td></tr>';
+    });
+  }
+  
+  if(showDocs){
+    html+='<tr class="sec"><td colspan="6">По документам</td></tr>';
+    docs.forEach(d=>{
+      const t=sumRows(d.rows);
+      html+='<tr><td>'+esc(d.meal)+' · '+dmy(d.date)+'</td><td class="num">'+fmt1(t.qty)+'</td><td class="num ck">'+fmt1(t.kcal)+'</td><td class="num">'+fmt1(t.p)+'</td><td class="num">'+fmt1(t.f)+'</td><td class="num">'+fmt1(t.c)+'</td></tr>';
+    });
+  }
+  
+  if(showDays){
+    html+='<tr class="sec"><td colspan="6">По дням</td></tr>';
+    const dayMap={};
+    docs.forEach(d=>{
+      if(!dayMap[d.date]) dayMap[d.date]={qty:0,k:0,p:0,f:0,c:0};
+      const t=sumRows(d.rows);
+      dayMap[d.date].qty+=t.qty;
+      dayMap[d.date].k+=t.kcal;
+      dayMap[d.date].p+=t.p;
+      dayMap[d.date].f+=t.f;
+      dayMap[d.date].c+=t.c;
+    });
+    Object.entries(dayMap).sort(([a],[b])=>a.localeCompare(b)).forEach(([date,t])=>{
+      html+='<tr><td>'+dmy(date)+'</td><td class="num">'+fmt1(t.qty)+'</td><td class="num ck">'+fmt1(t.k)+'</td><td class="num">'+fmt1(t.p)+'</td><td class="num">'+fmt1(t.f)+'</td><td class="num">'+fmt1(t.c)+'</td></tr>';
+    });
+  }
+  
+  if(showTotal){
+    const t={qty:0,k:0,p:0,f:0,c:0};
+    docs.forEach(d=>{ const s=sumRows(d.rows); t.qty+=s.qty; t.k+=s.kcal; t.p+=s.p; t.f+=s.f; t.c+=s.c; });
+    html+='<tr class="avg"><td>ОБЩИЙ ИТОГ</td><td class="num">'+fmt1(t.qty)+'</td><td class="num ck">'+fmt1(t.k)+'</td><td class="num">'+fmt1(t.p)+'</td><td class="num">'+fmt1(t.f)+'</td><td class="num">'+fmt1(t.c)+'</td></tr>';
+  }
+  
+  body.innerHTML=html;
+}
+
+$('#repFilterBtn').onclick=()=>{
+  const f=$('#repFilters');
+  f.style.display=f.style.display==='none'?'flex':'none';
+  $('#repFilterBtn').classList.toggle('active');
+};
+$('#repFrom').onchange=renderReport;
+$('#repTo').onchange=renderReport;
+['fProdDetail','fProducts','fDocs','fDays','fTotal'].forEach(id=>$('#'+id).onchange=renderReport);
+
+$('#repCopy').onclick=async()=>{
+  const body=$('#repBody');
+  const rows=body.querySelectorAll('tr');
+  let text='Отчёт DIETA\n\n';
+  rows.forEach(r=>{
+    const cells=r.querySelectorAll('td,th');
+    const vals=Array.from(cells).map(c=>c.textContent.trim());
+    text+=vals.join('\t')+'\n';
+  });
+  try{
+    await navigator.clipboard.writeText(text);
+    toast('Отчёт скопирован','ok');
+  }catch(e){ toast('Не удалось скопировать','err'); }
+};
+$('#repHome').onclick=()=>{
+  $$('.tab').forEach(x=>x.classList.remove('active'));
+  $$('.tab')[0].classList.add('active');
+  $$('.screen').forEach(s=>s.classList.remove('active'));
+  $('#screen-journal').classList.add('active');
+};
+
+(async()=>{
+  try{ await DB.open(); }catch(e){ DB.useLS=true; }
+  try{
+    state.products=await DB.get('products','all')||[];
+    state.docs=await DB.get('docs','all')||[];
+    state.weights=await DB.get('weights','all')||[];
+    state.meta=await DB.get('meta','all')||state.meta;
+  }catch(e){ console.warn('load error',e); }
+  state.meta.lastLaunch=todayStr();
+  await persist();
+  renderJournal();
+  setTimeout(()=>$('#d-splash').classList.add('off'),600);
+})();
+
+})();
+</script>
+</body>
+</html>
