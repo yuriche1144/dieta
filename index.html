@@ -854,7 +854,7 @@ function qtyDialog(defaultVal, onDone){
   inp.addEventListener('keydown',(e)=>{
     if(e.key==='Enter'){ e.preventDefault(); m.el.querySelector('[data-ok]').click(); }
   });
-  setTimeout(()=>{ inp.focus(); const len=inp.value.length; inp.setSelectionRange(len,len); },100);
+  setTimeout(()=>{ inp.focus(); inp.select(); },100);
   return m;
 }
 
