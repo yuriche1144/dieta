@@ -549,7 +549,7 @@ function productForm(prod, onDone){
       '<label class="f-c">Углеводы<input id="fC" type="number" step="0.1" min="0" enterkeyhint="done" value="'+esc(prod.c)+'"></label>'+
     '</div>'+
     '</div>',
-    { raised: window.innerWidth<=640 }
+    {top:true}
   );
   const inp=(s)=>m.el.querySelector(s);
   const recalc=()=>{ inp('#fKcal').value=fmt1(kcal100({p:inp('#fP').value,f:inp('#fF').value,c:inp('#fC').value})); };
