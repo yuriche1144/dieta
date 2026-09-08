@@ -845,7 +845,7 @@ function renderEditor(){
       return '<div style="position:relative;border-bottom:1px solid var(--line)">'+
         '<div class="row" style="padding-right:88px"><div class="grow">'+
         '<div class="l1"><span class="name">'+esc(r.name)+'</span><span class="kcal num">'+fmt1(t.k)+'</span></div>'+
-        '<div class="l2 num"><input type="number" class="qty-input" data-qty="'+i+'" value="'+r.qty+'" style="width:60px;text-align:center;border:1px solid var(--line);border-radius:6px;padding:2px 4px;background:var(--surface);font-weight:700;font-family:inherit;font-size:12px">&nbsp;г&nbsp;&nbsp;'+
+        '<div class="l2 num"><b>'+fmt1(r.qty)+' г</b>&nbsp;&nbsp;'+
         '<b class="mp">Б '+fmt1(t.p)+'</b>&nbsp;&nbsp;<b class="mf">Ж '+fmt1(t.f)+'</b>&nbsp;&nbsp;<b class="mc">У '+fmt1(t.c)+'</b></div></div></div>'+
         '<button class="iconbtn" data-swap="'+i+'" style="position:absolute;right:44px;top:50%;transform:translateY(-50%)" aria-label="Заменить"><svg><use href="#i-swap"/></svg></button>'+
         '<button class="iconbtn" data-del="'+i+'" style="position:absolute;right:6px;top:50%;transform:translateY(-50%);color:var(--red)" aria-label="Удалить"><svg><use href="#i-trash"/></svg></button>'+
@@ -856,49 +856,24 @@ function renderEditor(){
       doc.rows.splice(+b.dataset.del,1);
       renderEditor();
     });
-function renderEditor(){
-  const doc=state.editDoc;
-  if(!doc) return;
-  $('#edTitle').textContent=doc.meal||'Документ';
-  $('#edDate').value=doc.date;
-  $('#edTime').value=doc.time||'';
-  const sel=$('#edMeal');
-  sel.innerHTML=MEALS.map(m=>'<option value="'+m+'"'+(m===doc.meal?' selected':'')+'>'+m+'</option>').join('');
-  const box=$('#edRows');
-  if(!doc.rows.length){
-    box.innerHTML='<div class="empty"><div class="e-ico"><svg><use href="#i-basket"/></svg></div><h3>Продукты не добавлены</h3><p>Нажмите "Продукт" чтобы добавить</p></div>';
-  } else {
-    box.innerHTML=doc.rows.map((r,i)=>{
-      const t={k:round1(r.k||0),p:round1(r.p||0),f:round1(r.f||0),c:round1(r.c||0)};
-      return '<div style="position:relative;border-bottom:1px solid var(--line)">'+
-        '<div class="row" style="padding-right:88px"><div class="grow">'+
-        '<div class="l1"><span class="name">'+esc(r.name)+'</span><span class="kcal num">'+fmt1(t.k)+'</span></div>'+
-        '<div class="l2 num"><input type="number" class="qty-input" data-qty="'+i+'" value="'+r.qty+'" style="width:60px;text-align:center;border:1px solid var(--line);border-radius:6px;padding:2px 4px;background:var(--surface);font-weight:700;font-family:inherit;font-size:12px">&nbsp;г&nbsp;&nbsp;'+
-        '<b class="mp">Б '+fmt1(t.p)+'</b>&nbsp;&nbsp;<b class="mf">Ж '+fmt1(t.f)+'</b>&nbsp;&nbsp;<b class="mc">У '+fmt1(t.c)+'</b></div></div></div>'+
-        '<button class="iconbtn" data-swap="'+i+'" style="position:absolute;right:44px;top:50%;transform:translateY(-50%)" aria-label="Заменить"><svg><use href="#i-swap"/></svg></button>'+
-        '<button class="iconbtn" data-del="'+i+'" style="position:absolute;right:6px;top:50%;transform:translateY(-50%);color:var(--red)" aria-label="Удалить"><svg><use href="#i-trash"/></svg></button>'+
-        '</div>';
-    }).join('');
-    box.querySelectorAll('[data-swap]').forEach(b=>b.onclick=()=>productPicker(+b.dataset.swap));
-    box.querySelectorAll('[data-del]').forEach(b=>b.onclick=()=>{
-      doc.rows.splice(+b.dataset.del,1);
-      renderEditor();
-    });
-    box.querySelectorAll('.qty-input').forEach(inp=>inp.onchange=()=>{
-      const idx=+inp.dataset.qty;
-      const val=round1(inp.value);
-      if(val>0){
-        const row=doc.rows[idx];
-        const p=state.products.find(x=>x.id===row.pid);
-        if(p){
-          row.qty=val;
-          row.k=round1(kcal100(p)*val/100);
-          row.p=round1(p.p*val/100);
-          row.f=round1(p.f*val/100);
-          row.c=round1(p.c*val/100);
-          renderEditor();
+    box.querySelectorAll('.row').forEach((row, idx) => {
+      row.onclick = () => {
+        const r = doc.rows[idx];
+        const p = state.products.find(x => x.id === r.pid);
+        const newQty = prompt('Количество (г):', r.qty);
+        if (newQty !== null && newQty !== '') {
+          const val = round1(parseFloat(newQty));
+          if (val > 0 && p) {
+            r.qty = val;
+            r.k = round1(kcal100(p) * val / 100);
+            r.p = round1(p.p * val / 100);
+            r.f = round1(p.f * val / 100);
+            r.c = round1(p.c * val / 100);
+            renderEditor();
+          }
         }
-      }
+      };
+      row.style.cursor = 'pointer';
     });
   }
   const t=sumRows(doc.rows);
