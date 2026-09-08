@@ -886,13 +886,12 @@ function renderEditor(){
       renderEditor();
     });
     box.querySelectorAll('.row').forEach((row, idx) => {
-      row.onclick = () => {
+      row.onclick = (e) => {
+        if(e.target.closest('[data-swap]') || e.target.closest('[data-del]')) return;
         const r = doc.rows[idx];
         const p = state.products.find(x => x.id === r.pid);
-        const newQty = prompt('Количество (г):', r.qty);
-        if (newQty !== null && newQty !== '') {
-          const val = round1(parseFloat(newQty));
-          if (val > 0 && p) {
+        qtyDialog(r.qty, (val) => {
+          if (p) {
             r.qty = val;
             r.k = round1(kcal100(p) * val / 100);
             r.p = round1(p.p * val / 100);
@@ -900,7 +899,7 @@ function renderEditor(){
             r.c = round1(p.c * val / 100);
             renderEditor();
           }
-        }
+        });
       };
       row.style.cursor = 'pointer';
     });
