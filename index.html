@@ -250,6 +250,23 @@ main{flex:1;padding:18px 0 calc(var(--tab-h) + 20px + env(safe-area-inset-bottom
 #d-splash .s-ver{margin-top:14px;font-size:12px;font-weight:800;color:var(--green-deep);border:1.5px solid var(--green-deep);border-radius:999px;padding:4px 14px;letter-spacing:.08em}
 #d-splash .s-cursor{margin-top:22px;width:9px;height:22px;background:var(--amber);animation:blink 1s steps(1) infinite}
 @keyframes blink{50%{opacity:0}}
+/* Убираем лишние отступы и центрирование у отчёта */
+#screen-report {
+  padding-left: 0 !important;
+  padding-right: 0 !important;
+}
+#screen-report .h-row {
+  padding-left: 18px !important;
+  padding-right: 18px !important;
+}
+#repWrap {
+  margin: 0 !important;
+  border-radius: 0 !important;
+}
+.portrait .tbl {
+  margin: 0 !important;
+  width: 100% !important;
+}
 </style>
 </head>
 <body>
@@ -1070,7 +1087,8 @@ function importDB(){
     try{
       const data=JSON.parse(text);
       if(!data.products && !data.docs){ toast('Это не файл базы DIETA','err'); return; }
-      confirmDialog('Импорт базы','Заменить все текущие данные данными из файла?', async()=>{
+      const fileName = f.name.length > 30 ? f.name.substring(0, 30) + '...' : f.name;
+      confirmDialog('Импорт базы', 'Заменить все текущие данные данными из файла?<br><br><b style="color:var(--amber);font-size:12px">'+esc(fileName)+'</b>', async()=>{
         state.products=data.products||[];
         state.docs=data.docs||[];
         state.weights=data.weights||[];
@@ -1242,7 +1260,12 @@ $('#repHome').onclick=()=>{
 };
 
 function updateOrientation(){
-  if(window.innerWidth > window.innerHeight){
+  const isLandscape = window.innerWidth > window.innerHeight || 
+                      window.orientation === 90 || 
+                      window.orientation === -90 ||
+                      screen.orientation?.type.includes('landscape');
+  
+  if(isLandscape){
     document.body.classList.add('landscape');
     document.body.classList.remove('portrait');
   } else {
@@ -1260,6 +1283,17 @@ function updateOrientation(){
     if(tabbar) tabbar.style.display = '';
   }
 }
+
+// Более надёжное отслеживание
+window.addEventListener('resize', ()=>{
+  clearTimeout(window.__orientationTimeout);
+  window.__orientationTimeout = setTimeout(updateOrientation, 150);
+});
+window.addEventListener('orientationchange', updateOrientation);
+if(screen.orientation){
+  screen.orientation.addEventListener('change', updateOrientation);
+}
+updateOrientation();
 
 window.addEventListener('resize', updateOrientation);
 window.addEventListener('orientationchange', updateOrientation);
