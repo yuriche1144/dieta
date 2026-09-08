@@ -135,14 +135,12 @@ main{flex:1;padding:18px 0 calc(var(--tab-h) + 20px + env(safe-area-inset-bottom
 .tbl tr.dtotal td{background:#f3edd9;font-weight:800;color:var(--green-deep)}
 .tbl tr.daytotal td{background:#e7dfc4;font-weight:800;color:#6b4d12}
 .tbl tr.avg td{background:var(--amber-soft);font-weight:800}
-@media (orientation:portrait){
-  .tbl th:nth-child(2),.tbl td:nth-child(2){display:none}
-}
-@media (orientation:landscape){
-  #app{max-width:min(720px,100%)}
-  body.no-tabbar #tabbar{display:none}
-  body.no-tabbar main{padding-bottom:16px}
-}
+.portrait .tbl th:nth-child(2),
+.portrait .tbl td:nth-child(2){display:none}
+
+.landscape #app{max-width:min(720px,100%)}
+.landscape body.no-tabbar #tabbar{display:none}
+.landscape body.no-tabbar main{padding-bottom:16px}
 
 #screen-editor{position:fixed;inset:0;z-index:60;background:var(--bg);display:none;flex-direction:column}
 #screen-editor.active{display:flex;animation:fadeUp .25s ease both}
@@ -1072,8 +1070,14 @@ async function renderReport(){
     html+='<tr class="sec"><td colspan="6">Продукты в документах</td></tr>';
     docs.forEach(d=>{
       html+='<tr class="dhead"><td colspan="6">'+esc(d.meal)+' · '+dmy(d.date)+(d.time?' '+d.time:'')+'</td></tr>';
+      const isPortrait = document.body.classList.contains('portrait');
       d.rows.forEach(r=>{
-        html+='<tr><td>'+esc(r.name)+'</td><td class="num">'+fmt1(r.qty)+'</td><td class="num ck">'+fmt1(r.k)+'</td><td class="num">'+fmt1(r.p)+'</td><td class="num">'+fmt1(r.f)+'</td><td class="num">'+fmt1(r.c)+'</td></tr>';
+        if(isPortrait){
+          html+='<tr><td colspan="3">'+esc(r.name)+'</td><td class="num">'+fmt1(r.qty)+' г</td><td class="num ck">'+fmt1(r.k)+' ккал</td><td></td></tr>';
+          html+='<tr><td colspan="6" style="padding-left:16px;font-size:12px"><b class="mp">Б '+fmt1(r.p)+'</b>&nbsp;&nbsp;<b class="mf">Ж '+fmt1(r.f)+'</b>&nbsp;&nbsp;<b class="mc">У '+fmt1(r.c)+'</b></td></tr>';
+        } else {
+          html+='<tr><td>'+esc(r.name)+'</td><td class="num">'+fmt1(r.qty)+'</td><td class="num ck">'+fmt1(r.k)+'</td><td class="num">'+fmt1(r.p)+'</td><td class="num">'+fmt1(r.f)+'</td><td class="num">'+fmt1(r.c)+'</td></tr>';
+        }
       });
       const t=sumRows(d.rows);
       html+='<tr class="dtotal"><td>Итого</td><td class="num">'+fmt1(t.qty)+'</td><td class="num ck">'+fmt1(t.kcal)+'</td><td class="num">'+fmt1(t.p)+'</td><td class="num">'+fmt1(t.f)+'</td><td class="num">'+fmt1(t.c)+'</td></tr>';
@@ -1159,6 +1163,19 @@ $('#repHome').onclick=()=>{
   $$('.screen').forEach(s=>s.classList.remove('active'));
   $('#screen-journal').classList.add('active');
 };
+
+function updateOrientation(){
+  if(window.innerWidth > window.innerHeight){
+    document.body.classList.add('landscape');
+    document.body.classList.remove('portrait');
+  } else {
+    document.body.classList.add('portrait');
+    document.body.classList.remove('landscape');
+  }
+}
+window.addEventListener('resize', updateOrientation);
+window.addEventListener('orientationchange', updateOrientation);
+updateOrientation();
 
 (async()=>{
   try{ await DB.open(); }catch(e){ DB.useLS=true; }
