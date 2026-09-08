@@ -12,7 +12,7 @@
 <link rel="manifest" href="manifest.json">
 <link rel="icon" type="image/png" sizes="512x512" href="icon-512.png">
 <link rel="apple-touch-icon" href="icon-512.png">
-<title>DIETA 1.0.28 — журнал питания и веса</title>
+<title>DIETA 1.0.29 — журнал питания и веса</title>
 <style>
 :root{
   --bg:#f4efe2; --surface:#fbf8ef; --surface2:#efe8d6; --ink:#24301f; --muted:#71805f;
@@ -135,9 +135,28 @@ main{flex:1;padding:18px 0 calc(var(--tab-h) + 20px + env(safe-area-inset-bottom
 .tbl tr.dtotal td{background:#f3edd9;font-weight:800;color:var(--green-deep)}
 .tbl tr.daytotal td{background:#e7dfc4;font-weight:800;color:#6b4d12}
 .tbl tr.avg td{background:var(--amber-soft);font-weight:800}
-.portrait .tbl th:nth-child(2),
-.portrait .tbl td:nth-child(2){display:none}
+/* Переключение заголовков таблицы отчёта */
+.portrait #tblHeadLand{display:none!important}
+.portrait #tblHeadPort{display:table-row!important}
+.landscape #tblHeadLand{display:table-row!important}
+.landscape #tblHeadPort{display:none!important}
+/* Уменьшение высоты строк в портретной ориентации */
+.portrait .tbl tr td {
+  padding: 3px 6px !important;
+  line-height: 1.3 !important;
+}
+.portrait .tbl tr td[rowspan] {
+  padding: 5px 8px !important;
+}
+/* Убрать разделитель между строками продукта */
+.portrait .tbl tr td:not([colspan]) {
+  border-bottom: none !important;
+}
+.portrait .tbl tr td[colspan] {
+  border-bottom: 1px solid var(--line) !important;
+}
 
+/* Горизонтальная ориентация */
 .landscape #app{max-width:min(720px,100%)}
 .landscape body.no-tabbar #tabbar{display:none}
 .landscape body.no-tabbar main{padding-bottom:16px}
@@ -238,7 +257,7 @@ main{flex:1;padding:18px 0 calc(var(--tab-h) + 20px + env(safe-area-inset-bottom
 <div id="d-splash">
   <div class="s-logo">DIETA<b>.</b></div>
   <div class="s-sub">журнал питания</div>
-  <div class="s-ver">v 1.0.28</div>
+  <div class="s-ver">v 1.0.29</div>
   <div class="s-cursor"></div>
 </div>
 
@@ -288,6 +307,7 @@ main{flex:1;padding:18px 0 calc(var(--tab-h) + 20px + env(safe-area-inset-bottom
     <div id="jList"></div>
   </section>
 
+
   <section class="screen" id="screen-report">
     <div class="h-row">
       <h1 class="h-title">Отчёт</h1>
@@ -313,12 +333,25 @@ main{flex:1;padding:18px 0 calc(var(--tab-h) + 20px + env(safe-area-inset-bottom
       </div>
     </div>
     <div class="report-wrap" id="repWrap">
-      <table class="tbl">
-        <thead><tr><th>Продукт</th><th>Кол-во</th><th>Ккал</th><th>Белки</th><th>Жиры</th><th>Углев</th></tr></thead>
-        <tbody id="repBody"></tbody>
-      </table>
-    </div>
+<table class="tbl">
+  <thead>
+    <tr id="tblHeadLand">
+      <th>Продукт</th><th>Кол-во</th><th>Ккал</th><th>Белки</th><th>Жиры</th><th>Углев</th>
+    </tr>
+    <tr id="tblHeadPort" style="display:none">
+      <th colspan="1" style="text-align:left;width:50%">ПРОДУКТЫ</th>
+      <th colspan="3" style="text-align:right">
+        <span style="display:inline-block;width:33.33%">Граммы/Ккал</span>
+        <span style="display:inline-block;width:33.33%">Белки</span>
+        <span style="display:inline-block;width:33.34%">Жиры/Углеводы</span>
+      </th>
+    </tr>
+  </thead>
+  <tbody id="repBody"></tbody>
+</table>
+  </div>
   </section>
+
 
   <section class="screen" id="screen-products">
     <div class="h-row">
@@ -386,7 +419,7 @@ window.__dietaScriptInfo = window.__dietaScriptInfo || function(){
 };
 (function () {
 'use strict';
-var APP_VERSION = '1.0.28';
+var APP_VERSION = '1.0.29';
 var CLAIMED = window.__DIETA_CLAIMED_VERSION;
 function verGT(a,b){ var pa=a.split('.').map(Number), pb=b.split('.').map(Number);
   for(var i=0;i<3;i++){ if((pa[i]||0)>(pb[i]||0)) return true; if((pa[i]||0)<(pb[i]||0)) return false; } return false; }
@@ -398,6 +431,13 @@ const $$ = (s) => Array.from(document.querySelectorAll(s));
 
 function round1(x){ return Math.round((+x||0)*10)/10; }
 function fmt1(x){ return round1(x).toFixed(1).replace('.', ','); }
+function fmt1(x){ return round1(x).toFixed(1).replace('.', ','); }
+function fmtG(x){ return fmt1(x)+' г'; }
+function fmtK(x){ return fmt1(x)+' к'; }
+function fmtB(x){ return fmt1(x)+' б'; }
+function fmtZh(x){ return fmt1(x)+' ж'; }
+function fmtU(x){ return fmt1(x)+' у'; }
+
 function pad2(n){ return String(n).padStart(2,'0'); }
 function todayStr(d){ d = d||new Date(); return d.getFullYear()+'-'+pad2(d.getMonth()+1)+'-'+pad2(d.getDate()); }
 function nowHM(){ const d=new Date(); return pad2(d.getHours())+':'+pad2(d.getMinutes()); }
@@ -952,6 +992,27 @@ $$('.tab').forEach(t=>t.onclick=()=>{
   t.classList.add('active');
   $$('.screen').forEach(s=>s.classList.remove('active'));
   $('#screen-'+t.dataset.tab).classList.add('active');
+  
+  // Управление отображением totalsBar и tabbar
+  const totalsBar = document.getElementById('totalsBar');
+  const tabbar = document.getElementById('tabbar');
+  
+  // Показывать totalsBar и tabbar только в разделе "Приёмы пищи"
+  if(t.dataset.tab === 'journal') {
+    if(totalsBar) totalsBar.style.display = '';
+    if(tabbar) tabbar.style.display = '';
+  } else {
+    // Скрывать в остальных разделах
+    if(totalsBar) totalsBar.style.display = 'none';
+    
+    // В отчёте при горизонтальной ориентации скрывать tabbar
+    if(t.dataset.tab === 'report' && document.body.classList.contains('landscape')) {
+      if(tabbar) tabbar.style.display = 'none';
+    } else {
+      if(tabbar) tabbar.style.display = '';
+    }
+  }
+  
   if(t.dataset.tab==='report') renderReport();
   if(t.dataset.tab==='products') renderProducts();
   if(t.dataset.tab==='weight') renderWeights();
@@ -1052,6 +1113,8 @@ function resetDB(){
 }
 
 async function renderReport(){
+  if(!$('#repFrom').value) $('#repFrom').value=state.journalDate;
+  if(!$('#repTo').value) $('#repTo').value=state.journalDate;
   const from=$('#repFrom').value;
   const to=$('#repTo').value;
   const showProdDetail=$('#fProdDetail').checked;
@@ -1065,28 +1128,43 @@ async function renderReport(){
   if(to) docs=docs.filter(d=>d.date<=to);
   
   const body=$('#repBody');
+  const isPortrait = document.body.classList.contains('portrait');
   let html='';
   
+  // Вспомогательная функция для строки продукта
+  const pRow = (name, qty, kcal, p, f, c, isTotal=false) => {
+    if(isPortrait){
+      const nameStyle = 'width:50%; vertical-align:top; padding:6px 8px; font-weight:'+(isTotal?'800':'600')+'; white-space:normal; overflow-wrap:anywhere;';
+      const numStyle = 'width:16.67%; text-align:right; padding:6px 4px; font-size:12px;';
+      
+      html += '<tr>';
+      html += '<td rowspan="2" style="'+nameStyle+'">'+esc(name)+'</td>';
+      html += '<td style="'+numStyle+'">'+(qty?fmtG(qty):'')+'</td>';
+      html += '<td style="'+numStyle+';color:var(--amber);font-weight:800">'+fmtK(kcal)+'</td>';
+      html += '<td style="'+numStyle+'"></td>';
+      html += '</tr>';
+      html += '<tr>';
+      html += '<td style="'+numStyle+'"><b class="mp">'+fmtB(p)+'</b></td>';
+      html += '<td style="'+numStyle+'"><b class="mf">'+fmtZh(f)+'</b></td>';
+      html += '<td style="'+numStyle+'"><b class="mc">'+fmtU(c)+'</b></td>';
+      html += '</tr>';
+    } else {
+      html += '<tr><td style="font-weight:'+(isTotal?'800':'600')+'">'+esc(name)+'</td><td class="num">'+fmtG(qty)+'</td><td class="num ck">'+fmtK(kcal)+'</td><td class="num">'+fmtB(p)+'</td><td class="num">'+fmtZh(f)+'</td><td class="num">'+fmtU(c)+'</td></tr>';
+    }
+  };
+
   if(showProdDetail){
-    html+='<tr class="sec"><td colspan="6">Продукты в документах</td></tr>';
+    html+='<tr class="sec"><td colspan="'+(isPortrait?'4':'6')+'">Продукты в документах</td></tr>';
     docs.forEach(d=>{
-      html+='<tr class="dhead"><td colspan="6">'+esc(d.meal)+' · '+dmy(d.date)+(d.time?' '+d.time:'')+'</td></tr>';
-      const isPortrait = document.body.classList.contains('portrait');
-      d.rows.forEach(r=>{
-        if(isPortrait){
-          html+='<tr><td colspan="3">'+esc(r.name)+'</td><td class="num">'+fmt1(r.qty)+' г</td><td class="num ck">'+fmt1(r.k)+' ккал</td><td></td></tr>';
-          html+='<tr><td colspan="6" style="padding-left:16px;font-size:12px"><b class="mp">Б '+fmt1(r.p)+'</b>&nbsp;&nbsp;<b class="mf">Ж '+fmt1(r.f)+'</b>&nbsp;&nbsp;<b class="mc">У '+fmt1(r.c)+'</b></td></tr>';
-        } else {
-          html+='<tr><td>'+esc(r.name)+'</td><td class="num">'+fmt1(r.qty)+'</td><td class="num ck">'+fmt1(r.k)+'</td><td class="num">'+fmt1(r.p)+'</td><td class="num">'+fmt1(r.f)+'</td><td class="num">'+fmt1(r.c)+'</td></tr>';
-        }
-      });
+      html+='<tr class="dhead"><td colspan="'+(isPortrait?'4':'6')+'">'+esc(d.meal)+' · '+dmy(d.date)+(d.time?' '+d.time:'')+'</td></tr>';
+      d.rows.forEach(r=> pRow(r.name, r.qty, r.k, r.p, r.f, r.c));
       const t=sumRows(d.rows);
-      html+='<tr class="dtotal"><td>Итого</td><td class="num">'+fmt1(t.qty)+'</td><td class="num ck">'+fmt1(t.kcal)+'</td><td class="num">'+fmt1(t.p)+'</td><td class="num">'+fmt1(t.f)+'</td><td class="num">'+fmt1(t.c)+'</td></tr>';
+      pRow('Итого', t.qty, t.kcal, t.p, t.f, t.c, true);
     });
   }
   
   if(showProducts){
-    html+='<tr class="sec"><td colspan="6">Итог по продуктам</td></tr>';
+    html+='<tr class="sec"><td colspan="'+(isPortrait?'4':'6')+'">Итог по продуктам</td></tr>';
     const prodMap={};
     docs.forEach(d=>d.rows.forEach(r=>{
       if(!prodMap[r.pid]) prodMap[r.pid]={name:r.name,qty:0,k:0,p:0,f:0,c:0};
@@ -1096,21 +1174,19 @@ async function renderReport(){
       prodMap[r.pid].f+=+r.f||0;
       prodMap[r.pid].c+=+r.c||0;
     }));
-    Object.values(prodMap).sort((a,b)=>b.k-a.k).forEach(p=>{
-      html+='<tr><td>'+esc(p.name)+'</td><td class="num">'+fmt1(p.qty)+'</td><td class="num ck">'+fmt1(p.k)+'</td><td class="num">'+fmt1(p.p)+'</td><td class="num">'+fmt1(p.f)+'</td><td class="num">'+fmt1(p.c)+'</td></tr>';
-    });
+    Object.values(prodMap).sort((a,b)=>b.k-a.k).forEach(p=> pRow(p.name, p.qty, p.k, p.p, p.f, p.c));
   }
   
   if(showDocs){
-    html+='<tr class="sec"><td colspan="6">По документам</td></tr>';
+    html+='<tr class="sec"><td colspan="'+(isPortrait?'4':'6')+'">По документам</td></tr>';
     docs.forEach(d=>{
       const t=sumRows(d.rows);
-      html+='<tr><td>'+esc(d.meal)+' · '+dmy(d.date)+'</td><td class="num">'+fmt1(t.qty)+'</td><td class="num ck">'+fmt1(t.kcal)+'</td><td class="num">'+fmt1(t.p)+'</td><td class="num">'+fmt1(t.f)+'</td><td class="num">'+fmt1(t.c)+'</td></tr>';
+      pRow(d.meal+' · '+dmy(d.date), t.qty, t.kcal, t.p, t.f, t.c);
     });
   }
   
   if(showDays){
-    html+='<tr class="sec"><td colspan="6">По дням</td></tr>';
+    html+='<tr class="sec"><td colspan="'+(isPortrait?'4':'6')+'">По дням</td></tr>';
     const dayMap={};
     docs.forEach(d=>{
       if(!dayMap[d.date]) dayMap[d.date]={qty:0,k:0,p:0,f:0,c:0};
@@ -1122,14 +1198,14 @@ async function renderReport(){
       dayMap[d.date].c+=t.c;
     });
     Object.entries(dayMap).sort(([a],[b])=>a.localeCompare(b)).forEach(([date,t])=>{
-      html+='<tr><td>'+dmy(date)+'</td><td class="num">'+fmt1(t.qty)+'</td><td class="num ck">'+fmt1(t.k)+'</td><td class="num">'+fmt1(t.p)+'</td><td class="num">'+fmt1(t.f)+'</td><td class="num">'+fmt1(t.c)+'</td></tr>';
+      pRow(dmy(date), t.qty, t.k, t.p, t.f, t.c);
     });
   }
   
   if(showTotal){
     const t={qty:0,k:0,p:0,f:0,c:0};
     docs.forEach(d=>{ const s=sumRows(d.rows); t.qty+=s.qty; t.k+=s.kcal; t.p+=s.p; t.f+=s.f; t.c+=s.c; });
-    html+='<tr class="avg"><td>ОБЩИЙ ИТОГ</td><td class="num">'+fmt1(t.qty)+'</td><td class="num ck">'+fmt1(t.k)+'</td><td class="num">'+fmt1(t.p)+'</td><td class="num">'+fmt1(t.f)+'</td><td class="num">'+fmt1(t.c)+'</td></tr>';
+    pRow('ОБЩИЙ ИТОГ', t.qty, t.k, t.p, t.f, t.c, true);
   }
   
   body.innerHTML=html;
@@ -1173,7 +1249,18 @@ function updateOrientation(){
     document.body.classList.add('portrait');
     document.body.classList.remove('landscape');
   }
+  
+  // Скрыть tabbar в горизонтальной ориентации отчёта
+  const activeTab = document.querySelector('.tab.active');
+  if(activeTab && activeTab.dataset.tab === 'report' && document.body.classList.contains('landscape')) {
+    const tabbar = document.getElementById('tabbar');
+    if(tabbar) tabbar.style.display = 'none';
+  } else {
+    const tabbar = document.getElementById('tabbar');
+    if(tabbar) tabbar.style.display = '';
+  }
 }
+
 window.addEventListener('resize', updateOrientation);
 window.addEventListener('orientationchange', updateOrientation);
 updateOrientation();
