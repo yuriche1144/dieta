@@ -262,13 +262,27 @@ main{flex:1;padding:18px 0 calc(var(--tab-h) + 20px + env(safe-area-inset-bottom
 #repWrap {
   margin: 0 !important;
   border-radius: 0 !important;
+  overflow-x: hidden !important;
+  width: 100% !important;
 }
 .portrait .tbl {
   margin: 0 !important;
   width: 100% !important;
+  table-layout: fixed !important;
+  min-width: 0 !important;
 }
-</style>
-</head>
+.portrait .tbl td,
+.portrait .tbl th {
+  max-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+.portrait .tbl td[rowspan] {
+  white-space: normal !important;
+  overflow-wrap: break-word;
+  max-width: none;
+}
+</style></head>
 <body>
 
 <div id="d-splash">
