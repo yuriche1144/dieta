@@ -254,10 +254,14 @@ main{flex:1;padding:18px 0 calc(var(--tab-h) + 20px + env(safe-area-inset-bottom
 #screen-report {
   padding-left: 0 !important;
   padding-right: 0 !important;
+  padding-top: 0 !important;
+  margin-top: 0 !important;
 }
 #screen-report .h-row {
   padding-left: 18px !important;
   padding-right: 18px !important;
+  padding-top: 8px !important;
+  margin-top: 0 !important;
 }
 #repWrap {
   margin: 0 !important;
@@ -356,13 +360,12 @@ main{flex:1;padding:18px 0 calc(var(--tab-h) + 20px + env(safe-area-inset-bottom
         <input type="date" id="repTo">
       </div>
       <div class="rep-checks">
-        <label><input type="checkbox" id="fProdDetail" checked>Продукты (в документах ПП)</label>
         <label><input type="checkbox" id="fProducts" checked>Итог по продуктам</label>
         <label><input type="checkbox" id="fDocs" checked>По документам</label>
         <label><input type="checkbox" id="fDays" checked>По дням</label>
         <label><input type="checkbox" id="fTotal" checked>Общие итоги</label>
       </div>
-    </div>
+  </div>
     <div class="report-wrap" id="repWrap">
 <table class="tbl">
   <thead>
@@ -370,14 +373,13 @@ main{flex:1;padding:18px 0 calc(var(--tab-h) + 20px + env(safe-area-inset-bottom
       <th>Продукт</th><th>Кол-во</th><th>Ккал</th><th>Белки</th><th>Жиры</th><th>Углев</th>
     </tr>
     <tr id="tblHeadPort" style="display:none">
-      <th colspan="1" style="text-align:left;width:50%">ПРОДУКТЫ</th>
+      <th colspan="1" style="text-align:left;width:40%">ПРОДУКТЫ</th>
       <th colspan="3" style="text-align:right">
         <span style="display:inline-block;width:33.33%">Граммы/Ккал</span>
         <span style="display:inline-block;width:33.33%">Белки</span>
         <span style="display:inline-block;width:33.34%">Жиры/Углеводы</span>
       </th>
-    </tr>
-  </thead>
+    </tr>  </thead>
   <tbody id="repBody"></tbody>
 </table>
   </div>
@@ -1166,8 +1168,8 @@ async function renderReport(){
   // Вспомогательная функция для строки продукта
   const pRow = (name, qty, kcal, p, f, c, isTotal=false) => {
     if(isPortrait){
-      const nameStyle = 'width:50%; vertical-align:top; padding:6px 8px; font-weight:'+(isTotal?'800':'600')+'; white-space:normal; overflow-wrap:anywhere;';
-      const numStyle = 'width:16.67%; text-align:right; padding:6px 4px; font-size:12px;';
+      const nameStyle = 'width:40%; vertical-align:top; padding:6px 8px; font-weight:'+(isTotal?'800':'600')+'; white-space:normal; overflow-wrap:anywhere;';
+      const numStyle = 'width:20%; text-align:right; padding:6px 4px; font-size:11px; white-space:nowrap; overflow:hidden; text-overflow:ellipsis;';
       
       html += '<tr>';
       html += '<td rowspan="2" style="'+nameStyle+'">'+esc(name)+'</td>';
@@ -1186,7 +1188,7 @@ async function renderReport(){
   };
 
   if(showProdDetail){
-    html+='<tr class="sec"><td colspan="'+(isPortrait?'4':'6')+'">Продукты в документах</td></tr>';
+    
     docs.forEach(d=>{
       html+='<tr class="dhead"><td colspan="'+(isPortrait?'4':'6')+'">'+esc(d.meal)+' · '+dmy(d.date)+(d.time?' '+d.time:'')+'</td></tr>';
       d.rows.forEach(r=> pRow(r.name, r.qty, r.k, r.p, r.f, r.c));
