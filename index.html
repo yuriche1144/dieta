@@ -12,7 +12,7 @@
 <link rel="manifest" href="manifest.json">
 <link rel="icon" type="image/png" sizes="512x512" href="icon-512.png">
 <link rel="apple-touch-icon" href="icon-512.png">
-<title>DIETA 1.0.32 — журнал питания и веса</title>
+<title>DIETA 1.0.31 — журнал питания и веса</title>
 <style>
 :root{
   --bg:#f4efe2; --surface:#fbf8ef; --surface2:#efe8d6; --ink:#24301f; --muted:#71805f;
@@ -254,14 +254,10 @@ main{flex:1;padding:18px 0 calc(var(--tab-h) + 20px + env(safe-area-inset-bottom
 #screen-report {
   padding-left: 0 !important;
   padding-right: 0 !important;
-  padding-top: 0 !important;
-  margin-top: 0 !important;
 }
 #screen-report .h-row {
   padding-left: 18px !important;
   padding-right: 18px !important;
-  padding-top: 8px !important;
-  margin-top: 0 !important;
 }
 #repWrap {
   margin: 0 !important;
@@ -292,7 +288,7 @@ main{flex:1;padding:18px 0 calc(var(--tab-h) + 20px + env(safe-area-inset-bottom
 <div id="d-splash">
   <div class="s-logo">DIETA<b>.</b></div>
   <div class="s-sub">журнал питания</div>
-  <div class="s-ver">v 1.0.32</div>
+  <div class="s-ver">v 1.0.31</div>
   <div class="s-cursor"></div>
 </div>
 
@@ -360,12 +356,13 @@ main{flex:1;padding:18px 0 calc(var(--tab-h) + 20px + env(safe-area-inset-bottom
         <input type="date" id="repTo">
       </div>
       <div class="rep-checks">
+        <label><input type="checkbox" id="fProdDetail" checked>Продукты (в документах ПП)</label>
         <label><input type="checkbox" id="fProducts" checked>Итог по продуктам</label>
         <label><input type="checkbox" id="fDocs" checked>По документам</label>
         <label><input type="checkbox" id="fDays" checked>По дням</label>
         <label><input type="checkbox" id="fTotal" checked>Общие итоги</label>
       </div>
-  </div>
+    </div>
     <div class="report-wrap" id="repWrap">
 <table class="tbl">
   <thead>
@@ -373,13 +370,14 @@ main{flex:1;padding:18px 0 calc(var(--tab-h) + 20px + env(safe-area-inset-bottom
       <th>Продукт</th><th>Кол-во</th><th>Ккал</th><th>Белки</th><th>Жиры</th><th>Углев</th>
     </tr>
     <tr id="tblHeadPort" style="display:none">
-      <th colspan="1" style="text-align:left;width:40%">ПРОДУКТЫ</th>
+      <th colspan="1" style="text-align:left;width:50%">ПРОДУКТЫ</th>
       <th colspan="3" style="text-align:right">
         <span style="display:inline-block;width:33.33%">Граммы/Ккал</span>
         <span style="display:inline-block;width:33.33%">Белки</span>
         <span style="display:inline-block;width:33.34%">Жиры/Углеводы</span>
       </th>
-    </tr>  </thead>
+    </tr>
+  </thead>
   <tbody id="repBody"></tbody>
 </table>
   </div>
@@ -452,7 +450,7 @@ window.__dietaScriptInfo = window.__dietaScriptInfo || function(){
 };
 (function () {
 'use strict';
-var APP_VERSION = '1.0.32';
+var APP_VERSION = '1.0.31';
 var CLAIMED = window.__DIETA_CLAIMED_VERSION;
 function verGT(a,b){ var pa=a.split('.').map(Number), pb=b.split('.').map(Number);
   for(var i=0;i<3;i++){ if((pa[i]||0)>(pb[i]||0)) return true; if((pa[i]||0)<(pb[i]||0)) return false; } return false; }
@@ -1168,8 +1166,8 @@ async function renderReport(){
   // Вспомогательная функция для строки продукта
   const pRow = (name, qty, kcal, p, f, c, isTotal=false) => {
     if(isPortrait){
-      const nameStyle = 'width:40%; vertical-align:top; padding:6px 8px; font-weight:'+(isTotal?'800':'600')+'; white-space:normal; overflow-wrap:anywhere;';
-      const numStyle = 'width:20%; text-align:right; padding:6px 4px; font-size:11px; white-space:nowrap; overflow:hidden; text-overflow:ellipsis;';
+      const nameStyle = 'width:50%; vertical-align:top; padding:6px 8px; font-weight:'+(isTotal?'800':'600')+'; white-space:normal; overflow-wrap:anywhere;';
+      const numStyle = 'width:16.67%; text-align:right; padding:6px 4px; font-size:12px;';
       
       html += '<tr>';
       html += '<td rowspan="2" style="'+nameStyle+'">'+esc(name)+'</td>';
@@ -1188,7 +1186,7 @@ async function renderReport(){
   };
 
   if(showProdDetail){
-    
+    html+='<tr class="sec"><td colspan="'+(isPortrait?'4':'6')+'">Продукты в документах</td></tr>';
     docs.forEach(d=>{
       html+='<tr class="dhead"><td colspan="'+(isPortrait?'4':'6')+'">'+esc(d.meal)+' · '+dmy(d.date)+(d.time?' '+d.time:'')+'</td></tr>';
       d.rows.forEach(r=> pRow(r.name, r.qty, r.k, r.p, r.f, r.c));
