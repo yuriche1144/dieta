@@ -252,16 +252,21 @@ main{flex:1;padding:18px 0 calc(var(--tab-h) + 20px + env(safe-area-inset-bottom
 @keyframes blink{50%{opacity:0}}
 /* Убираем лишние отступы и центрирование у отчёта */
 #screen-report {
-  padding-left: 0 !important;
-  padding-right: 0 !important;
-  padding-top: 0 !important;
-  margin-top: 0 !important;
+  padding: 0 !important;
+  margin: 0 !important;
 }
 #screen-report .h-row {
-  padding-left: 18px !important;
-  padding-right: 18px !important;
-  padding-top: 8px !important;
+  padding: 4px 18px 0 18px !important;
+  margin: 0 !important;
+}
+#screen-report .h-title {
+  margin: 0 !important;
+  padding: 0 !important;
+  line-height: 1.1 !important;
+}
+#screen-report .rep-headbtns {
   margin-top: 0 !important;
+  padding-top: 0 !important;
 }
 #repWrap {
   margin: 0 !important;
