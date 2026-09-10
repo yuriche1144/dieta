@@ -1410,8 +1410,19 @@ function updateOrientation() {
     if (d) d.remove();
   }, 5000);
 
-  // Управление меню при повороте
+  // Принудительно перерисовать отчёт с БОЛЬШОЙ задержкой для iPhone
   const activeTab = document.querySelector('.tab.active');
+  if (activeTab && activeTab.dataset.tab === 'report') {
+    setTimeout(() => {
+      // Второй setTimeout для гарантии
+      setTimeout(() => {
+        console.log('Re-rendering report after orientation change');
+        renderReport();
+      }, 200);
+    }, 500);
+  }
+
+  // Управление меню
   const tabbar = document.getElementById('tabbar');
   if (activeTab && activeTab.dataset.tab === 'report' && isLandscape) {
     if (tabbar) tabbar.style.display = 'none';
