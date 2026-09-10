@@ -12,7 +12,7 @@
 <link rel="manifest" href="manifest.json">
 <link rel="icon" type="image/png" sizes="512x512" href="icon-512.png">
 <link rel="apple-touch-icon" href="icon-512.png">
-<title>DIETA 1.0.33 — журнал питания и веса</title>
+<title>DIETA 1.0.33a — журнал питания и веса</title>
 <style>
 :root{
   --bg:#f4efe2; --surface:#fbf8ef; --surface2:#efe8d6; --ink:#24301f; --muted:#71805f;
@@ -297,7 +297,7 @@ main{flex:1;padding:18px 0 calc(var(--tab-h) + 20px + env(safe-area-inset-bottom
 <div id="d-splash">
   <div class="s-logo">DIETA<b>.</b></div>
   <div class="s-sub">журнал питания</div>
-  <div class="s-ver">v 1.0.33</div>
+  <div class="s-ver">v 1.0.33a</div>
   <div class="s-cursor"></div>
 </div>
 
@@ -380,11 +380,11 @@ main{flex:1;padding:18px 0 calc(var(--tab-h) + 20px + env(safe-area-inset-bottom
     </tr>
     <tr id="tblHeadPort" style="display:none">
       <th colspan="1" style="text-align:left;width:40%">ПРОДУКТЫ</th>
-      <th colspan="3" style="text-align:right">
-        <span style="display:inline-block;width:33.33%">Граммы/Ккал</span>
-        <span style="display:inline-block;width:33.33%">Белки</span>
-        <span style="display:inline-block;width:33.34%">Жиры/Углеводы</span>
-      </th>
+	  <th colspan="3" style="text-align:right;padding-right:4px">
+        <span style="display:inline-block;width:33.33%;text-align:center">Граммы/Ккал</span>
+        <span style="display:inline-block;width:33.33%;text-align:center">Белки</span>
+        <span style="display:inline-block;width:33.34%;text-align:center">Жиры/Углеводы</span>
+      </th> 
     </tr>
   </thead>
   <tbody id="repBody"></tbody>
@@ -459,7 +459,7 @@ window.__dietaScriptInfo = window.__dietaScriptInfo || function(){
 };
 (function () {
 'use strict';
-var APP_VERSION = '1.0.33';
+var APP_VERSION = '1.0.33a';
 var CLAIMED = window.__DIETA_CLAIMED_VERSION;
 function verGT(a,b){ var pa=a.split('.').map(Number), pb=b.split('.').map(Number);
   for(var i=0;i<3;i++){ if((pa[i]||0)>(pb[i]||0)) return true; if((pa[i]||0)<(pb[i]||0)) return false; } return false; }
