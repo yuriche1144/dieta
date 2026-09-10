@@ -1032,18 +1032,21 @@ $$('.tab').forEach(t=>t.onclick=()=>{
   $$('.screen').forEach(s=>s.classList.remove('active'));
   $('#screen-'+t.dataset.tab).classList.add('active');
   
-  // Управление отображением totalsBar и tabbar
   const totalsBar = document.getElementById('totalsBar');
   const tabbar = document.getElementById('tabbar');
   
-  // Показывать totalsBar и tabbar только в разделе "Приёмы пищи"
+  // 1. "Итог дня" показываем только в разделе "Приёмы пищи"
   if(t.dataset.tab === 'journal') {
     if(totalsBar) totalsBar.style.display = '';
-    if(tabbar) tabbar.style.display = '';
   } else {
-    // Скрывать в остальных разделах
     if(totalsBar) totalsBar.style.display = 'none';
+  }
+  
+  // 2. Главное меню скрываем ТОЛЬКО в разделе "Отчёт"
+  if(t.dataset.tab === 'report') {
     if(tabbar) tabbar.style.display = 'none';
+  } else {
+    if(tabbar) tabbar.style.display = '';
   }
   
   if(t.dataset.tab==='report') renderReport();
