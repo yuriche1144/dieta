@@ -1319,10 +1319,15 @@ $('#repCopy').onclick=async()=>{
 };
 
 function updateOrientation(){
-  const isLandscape = window.innerWidth > window.innerHeight ||
-                      window.orientation === 90 ||
-                      window.orientation === -90 ||
-                      screen.orientation?.type.includes('landscape');
+  const width = window.innerWidth;
+  const height = window.innerHeight;
+  const orientation = window.orientation;
+  const screenType = screen.orientation?.type || 'unknown';
+  
+  const isLandscape = width > height ||
+                      orientation === 90 ||
+                      orientation === -90 ||
+                      screenType.includes('landscape');
 
   if(isLandscape){
     document.body.classList.add('landscape');
@@ -1332,10 +1337,29 @@ function updateOrientation(){
     document.body.classList.remove('landscape');
   }
 
+  // Детальный индикатор ориентации
+  const debugDiv = document.createElement('div');
+  debugDiv.id = 'orientDebug';
+  debugDiv.style.cssText = 'position:fixed;top:0;left:0;right:0;background:red;color:white;padding:8px;font-size:14px;z-index:9999;text-align:center;';
+  debugDiv.innerHTML = `
+    <div>Ширина: ${width}px, Высота: ${height}px</div>
+    <div>Orientation: ${orientation}, Screen: ${screenType}</div>
+    <div><b>${isLandscape ? 'LANDSCAPE (1 строка)' : 'PORTRAIT (2 строки)'}</b></div>
+  `;
+  const oldDebug = document.getElementById('orientDebug');
+  if(oldDebug) oldDebug.remove();
+  document.body.appendChild(debugDiv);
+  
+  // Индикатор висит 5 секунд
+  setTimeout(()=>{
+    const d = document.getElementById('orientDebug');
+    if(d) d.remove();
+  }, 5000);
+
   // Принудительно перерисовать отчёт при смене ориентации
   const activeTab = document.querySelector('.tab.active');
   if(activeTab && activeTab.dataset.tab === 'report') {
-    setTimeout(renderReport, 250);
+    setTimeout(renderReport, 300);
   }
 
   // Управление tabbar в отчёте
