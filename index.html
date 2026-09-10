@@ -1381,11 +1381,12 @@ function updateOrientation() {
   // Перерисовать отчёт при смене ориентации (с задержкой для iPhone)
   const activeTab = document.querySelector('.tab.active');
   if (activeTab && activeTab.dataset.tab === 'report') {
-setTimeout(() => {
-  setTimeout(() => {
-    renderReport();
-  }, 100);  // было 200
-}, 300);    // было 500
+    setTimeout(() => {
+      setTimeout(() => {
+        renderReport();
+      }, 200);
+    }, 500);
+  }
 
   // Управление меню
   const tabbar = document.getElementById('tabbar');
