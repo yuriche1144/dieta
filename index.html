@@ -12,7 +12,7 @@
 <link rel="manifest" href="manifest.json">
 <link rel="icon" type="image/png" sizes="512x512" href="icon-512.png">
 <link rel="apple-touch-icon" href="icon-512.png">
-<title>DIETA 1.0.37 — журнал питания и веса</title>
+<title>DIETA 1.0.38 — журнал питания и веса</title>
 <style>
 :root{
   --bg:#f4efe2; --surface:#fbf8ef; --surface2:#efe8d6; --ink:#24301f; --muted:#71805f;
@@ -308,7 +308,7 @@ main{flex:1;padding:18px 0 calc(var(--tab-h) + 20px + env(safe-area-inset-bottom
 <div id="d-splash">
   <div class="s-logo">DIETA<b>.</b></div>
   <div class="s-sub">журнал питания</div>
-  <div class="s-ver">v 1.0.37</div>
+  <div class="s-ver">v 1.0.38</div>
   <div class="s-cursor"></div>
 </div>
 
@@ -469,7 +469,7 @@ window.__dietaScriptInfo = window.__dietaScriptInfo || function(){
 };
 (function () {
 'use strict';
-var APP_VERSION = '1.0.37';
+var APP_VERSION = '1.0.38';
 var CLAIMED = window.__DIETA_CLAIMED_VERSION;
 function verGT(a,b){ var pa=a.split('.').map(Number), pb=b.split('.').map(Number);
   for(var i=0;i<3;i++){ if((pa[i]||0)>(pb[i]||0)) return true; if((pa[i]||0)<(pb[i]||0)) return false; } return false; }
@@ -1037,34 +1037,71 @@ $('#pSearch').addEventListener('input',renderProducts);
 
 $('#wAdd').onclick=()=>weightForm(null);
 
-$$('.tab').forEach(t=>t.onclick=()=>{
-  $$('.tab').forEach(x=>x.classList.remove('active'));
+$$('.tab').forEach(t => t.onclick = () => {
+  $$('.tab').forEach(x => x.classList.remove('active'));
   t.classList.add('active');
-  $$('.screen').forEach(s=>s.classList.remove('active'));
-  $('#screen-'+t.dataset.tab).classList.add('active');
+  $$('.screen').forEach(s => s.classList.remove('active'));
+  $('#screen-' + t.dataset.tab).classList.add('active');
+
+  const totalsBar = document.getElementById('totalsBar');
+  const tabbar = document.getElementById('tabbar');
+
+  if (t.dataset.tab === 'journal') {
+    if (totalsBar) totalsBar.style.display = '';
+    if (tabbar) tabbar.style.display = '';
+  } else if (t.dataset.tab === 'report') {
+    if (totalsBar) totalsBar.style.display = 'none';
+    if (tabbar) tabbar.style.display = 'none';
+    renderReport();
+  } else {
+    if (totalsBar) totalsBar.style.display = 'none';
+    if (tabbar) tabbar.style.display = '';
+  }
+
+  if (t.dataset.tab === 'products') renderProducts();
+  if (t.dataset.tab === 'weight') renderWeights();
+  if (t.dataset.tab === 'service') renderService();
+});
+
+// Переключение вкладок
+$$('.tab').forEach(t => t.onclick = () => {
+  $$('.tab').forEach(x => x.classList.remove('active'));
+  t.classList.add('active');
+  $$('.screen').forEach(s => s.classList.remove('active'));
+  $('#screen-' + t.dataset.tab).classList.add('active');
+
+  const totalsBar = document.getElementById('totalsBar');
+  const tabbar = document.getElementById('tabbar');
+
+  if (t.dataset.tab === 'journal') {
+    if (totalsBar) totalsBar.style.display = '';
+    if (tabbar) tabbar.style.display = '';
+  } else if (t.dataset.tab === 'report') {
+    if (totalsBar) totalsBar.style.display = 'none';
+    if (tabbar) tabbar.style.display = 'none';
+    renderReport();
+  } else {
+    if (totalsBar) totalsBar.style.display = 'none';
+    if (tabbar) tabbar.style.display = '';
+  }
+
+  if (t.dataset.tab === 'products') renderProducts();
+  if (t.dataset.tab === 'weight') renderWeights();
+  if (t.dataset.tab === 'service') renderService();
+});
+
+// Кнопка "Домик" в отчёте (возвращает меню)
+$('#repHome').onclick = () => {
+  $$('.tab').forEach(x => x.classList.remove('active'));
+  $$('.tab')[0].classList.add('active');
+  $$('.screen').forEach(s => s.classList.remove('active'));
+  $('#screen-journal').classList.add('active');
   
   const totalsBar = document.getElementById('totalsBar');
   const tabbar = document.getElementById('tabbar');
-  
-  // 1. "Итог дня" показываем только в разделе "Приёмы пищи"
-  if(t.dataset.tab === 'journal') {
-    if(totalsBar) totalsBar.style.display = '';
-  } else {
-    if(totalsBar) totalsBar.style.display = 'none';
-  }
-  
-  // 2. Главное меню скрываем ТОЛЬКО в разделе "Отчёт"
-  if(t.dataset.tab === 'report') {
-    if(tabbar) tabbar.style.display = 'none';
-  } else {
-    if(tabbar) tabbar.style.display = '';
-  }
-  
-  if(t.dataset.tab==='report') renderReport();
-  if(t.dataset.tab==='products') renderProducts();
-  if(t.dataset.tab==='weight') renderWeights();
-  if(t.dataset.tab==='service') renderService();
-});
+  if (totalsBar) totalsBar.style.display = '';
+  if (tabbar) tabbar.style.display = '';
+};
 
 function renderService(){
   const box=$('#svcArea');
@@ -1161,32 +1198,30 @@ function resetDB(){
 }
 
 async function renderReport(){
-  const debugDiv = document.createElement('div');
-  debugDiv.id = 'orientDebug';
-  debugDiv.style.cssText = 'position:fixed;top:0;left:0;background:red;color:white;padding:4px 8px;font-size:12px;z-index:9999';
-  debugDiv.textContent = isPortrait ? 'PORTRAIT' : 'LANDSCAPE';
-  const oldDebug = document.getElementById('orientDebug');
-  if(oldDebug) oldDebug.remove();
-  document.body.appendChild(debugDiv);
-  setTimeout(()=>debugDiv.remove(), 2000);
+  const todayStr = new Date().toISOString().split('T')[0];
+  const defaultDate = (state && state.journalDate) ? state.journalDate : todayStr;
   
-  if(!$('#repFrom').value) $('#repFrom').value=state.journalDate;
-  if(!$('#repTo').value) $('#repTo').value=state.journalDate;
-  const from=$('#repFrom').value;
-  const to=$('#repTo').value;
-  const showProdDetail=$('#fProdDetail').checked;
-  const showProducts=$('#fProducts').checked;
-  const showDocs=$('#fDocs').checked;
-  const showDays=$('#fDays').checked;
-  const showTotal=$('#fTotal').checked;
+  if (!$('#repFrom').value) $('#repFrom').value = defaultDate;
+  if (!$('#repTo').value) $('#repTo').value = defaultDate;
   
-  let docs=state.docs;
-  if(from) docs=docs.filter(d=>d.date>=from);
-  if(to) docs=docs.filter(d=>d.date<=to);
+  const from = $('#repFrom').value;
+  const to = $('#repTo').value;
   
-  const body=$('#repBody');
+  const showProdDetail = $('#fProdDetail') ? $('#fProdDetail').checked : false;
+  const showProducts = $('#fProducts') ? $('#fProducts').checked : true;
+  const showDocs = $('#fDocs') ? $('#fDocs').checked : true;
+  const showDays = $('#fDays') ? $('#fDays').checked : true;
+  const showTotal = $('#fTotal') ? $('#fTotal').checked : true;
+  
+  let docs = (state && Array.isArray(state.docs)) ? state.docs : [];
+  if (from) docs = docs.filter(d => d.date >= from);
+  if (to) docs = docs.filter(d => d.date <= to);
+  
+  const body = $('#repBody');
+  if (!body) return;
+  
   const isPortrait = document.body.classList.contains('portrait');
-  let html='';
+  let html = '';
   
   // Вспомогательная функция для строки продукта
   const pRow = (name, qty, kcal, p, f, c, isTotal=false) => {
@@ -1268,8 +1303,26 @@ async function renderReport(){
   console.log('renderReport - html length:', html.length);
   console.log('renderReport - isPortrait:', isPortrait);
   console.log('renderReport - docs count:', docs.length);
+  
+  console.log('  generated html length:', html.length);
+  body.innerHTML=html;
+  console.log('  body children after render:', body.children.length);
+  
   body.innerHTML=html;
   console.log('renderReport - done, body children:', body.children.length);
+    // Отладочный блок
+  const debugInfo = document.createElement('div');
+  debugInfo.id = 'renderDebug';
+  debugInfo.style.cssText = 'position:fixed;bottom:0;left:0;right:0;background:rgba(0,0,0,0.8);color:white;padding:8px;font-size:11px;z-index:9999;max-height:150px;overflow:auto;';
+  debugInfo.innerHTML = `
+    <div>Docs: ${state.docs.length} → ${docs.length}</div>
+    <div>Portrait: ${isPortrait}</div>
+    <div>Filters: PD=${showProdDetail} P=${showProducts} D=${showDocs}</div>
+  `;
+  const old = document.getElementById('renderDebug');
+  if(old) old.remove();
+  document.body.appendChild(debugInfo);
+  setTimeout(()=>{ const d=document.getElementById('renderDebug'); if(d) d.remove(); }, 3000);
   
 }
 
@@ -1297,40 +1350,13 @@ $('#repCopy').onclick=async()=>{
   }catch(e){ toast('Не удалось скопировать','err'); }
 };
 
-$('#repHome').onclick=()=>{
-  $$('.tab').forEach(x=>x.classList.remove('active'));
-  $$('.tab')[0].classList.add('active');
-  $$('.screen').forEach(s=>s.classList.remove('active'));
-  $('#screen-journal').classList.add('active');
-};
+function updateOrientation() {
+  const isLandscape = window.innerWidth > window.innerHeight ||
+                      window.orientation === 90 ||
+                      window.orientation === -90 ||
+                      (screen.orientation && screen.orientation.type.includes('landscape'));
 
-$('#repCopy').onclick=async()=>{
-  const body=$('#repBody');
-  const rows=body.querySelectorAll('tr');
-  let text='Отчёт DIETA\n\n';
-  rows.forEach(r=>{
-    const cells=r.querySelectorAll('td,th');
-    const vals=Array.from(cells).map(c=>c.textContent.trim());
-    text+=vals.join('\t')+'\n';
-  });
-  try{
-    await navigator.clipboard.writeText(text);
-    toast('Отчёт скопирован','ok');
-  }catch(e){ toast('Не удалось скопировать','err'); }
-};
-
-function updateOrientation(){
-  const width = window.innerWidth;
-  const height = window.innerHeight;
-  const orientation = window.orientation;
-  const screenType = screen.orientation?.type || 'unknown';
-  
-  const isLandscape = width > height ||
-                      orientation === 90 ||
-                      orientation === -90 ||
-                      screenType.includes('landscape');
-
-  if(isLandscape){
+  if (isLandscape) {
     document.body.classList.add('landscape');
     document.body.classList.remove('portrait');
   } else {
@@ -1338,31 +1364,22 @@ function updateOrientation(){
     document.body.classList.remove('landscape');
   }
 
-  // Принудительно перерисовать отчёт при смене ориентации
   const activeTab = document.querySelector('.tab.active');
-  if(activeTab && activeTab.dataset.tab === 'report') {
-    setTimeout(()=>{
-      renderReport();
-    }, 400); // Задержка 400мс дает iOS время пересчитать размеры окна
-  }
-
-  // Управление tabbar в отчёте
-  if(activeTab && activeTab.dataset.tab === 'report' && isLandscape) {
-    const tabbar = document.getElementById('tabbar');
-    if(tabbar) tabbar.style.display = 'none';
-  } else {
-    const tabbar = document.getElementById('tabbar');
-    if(tabbar) tabbar.style.display = '';
+  const tabbar = document.getElementById('tabbar');
+  if (activeTab && activeTab.dataset.tab === 'report' && isLandscape) {
+    if (tabbar) tabbar.style.display = 'none';
+  } else if (activeTab && activeTab.dataset.tab !== 'report') {
+    if (tabbar) tabbar.style.display = '';
   }
 }
 
-// Слушатели событий (должны быть сразу после функции)
-window.addEventListener('resize', updateOrientation);
-window.addEventListener('orientationchange', updateOrientation);
-updateOrientation();
-
-window.addEventListener('resize', updateOrientation);
-window.addEventListener('orientationchange', updateOrientation);
+window.addEventListener('resize', () => {
+  clearTimeout(window.__orientTimer);
+  window.__orientTimer = setTimeout(updateOrientation, 200);
+});
+window.addEventListener('orientationchange', () => {
+  setTimeout(updateOrientation, 300);
+});
 updateOrientation();
 
 (async()=>{
