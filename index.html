@@ -1043,13 +1043,7 @@ $$('.tab').forEach(t=>t.onclick=()=>{
   } else {
     // Скрывать в остальных разделах
     if(totalsBar) totalsBar.style.display = 'none';
-    
-    // В отчёте при горизонтальной ориентации скрывать tabbar
-    if(t.dataset.tab === 'report' && document.body.classList.contains('landscape')) {
-      if(tabbar) tabbar.style.display = 'none';
-    } else {
-      if(tabbar) tabbar.style.display = '';
-    }
+    if(tabbar) tabbar.style.display = 'none';
   }
   
   if(t.dataset.tab==='report') renderReport();
@@ -1282,41 +1276,14 @@ $('#repHome').onclick=()=>{
 };
 
 function updateOrientation(){
-  const isLandscape = window.innerWidth > window.innerHeight || 
-                      window.orientation === 90 || 
-                      window.orientation === -90 ||
-                      screen.orientation?.type.includes('landscape');
-  
-  if(isLandscape){
+  if(window.innerWidth > window.innerHeight){
     document.body.classList.add('landscape');
     document.body.classList.remove('portrait');
   } else {
     document.body.classList.add('portrait');
     document.body.classList.remove('landscape');
   }
-  
-  // Скрыть tabbar в горизонтальной ориентации отчёта
-  const activeTab = document.querySelector('.tab.active');
-  if(activeTab && activeTab.dataset.tab === 'report' && document.body.classList.contains('landscape')) {
-    const tabbar = document.getElementById('tabbar');
-    if(tabbar) tabbar.style.display = 'none';
-  } else {
-    const tabbar = document.getElementById('tabbar');
-    if(tabbar) tabbar.style.display = '';
-  }
 }
-
-// Более надёжное отслеживание
-window.addEventListener('resize', ()=>{
-  clearTimeout(window.__orientationTimeout);
-  window.__orientationTimeout = setTimeout(updateOrientation, 150);
-});
-window.addEventListener('orientationchange', updateOrientation);
-if(screen.orientation){
-  screen.orientation.addEventListener('change', updateOrientation);
-}
-updateOrientation();
-
 window.addEventListener('resize', updateOrientation);
 window.addEventListener('orientationchange', updateOrientation);
 updateOrientation();
