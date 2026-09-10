@@ -252,10 +252,15 @@ main{flex:1;padding:18px 0 calc(var(--tab-h) + 20px + env(safe-area-inset-bottom
 @keyframes blink{50%{opacity:0}}
 /* Убираем лишние отступы и центрирование у отчёта */
 #screen-report {
+  display: flex !important;
+  flex-direction: column !important;
+  height: 100vh !important;
   padding: 0 !important;
   margin: 0 !important;
+  overflow: hidden !important;
 }
 #screen-report .h-row {
+  flex-shrink: 0 !important;
   padding: 4px 18px 0 18px !important;
   margin: 0 !important;
 }
@@ -268,10 +273,17 @@ main{flex:1;padding:18px 0 calc(var(--tab-h) + 20px + env(safe-area-inset-bottom
   margin-top: 0 !important;
   padding-top: 0 !important;
 }
-#repWrap {
+#screen-report .rep-filters {
+  flex-shrink: 0 !important;
+}
+#repWrap, .report-wrap {
+  flex: 1 !important;
+  min-height: 0 !important;
   margin: 0 !important;
+  padding: 0 !important;
   border-radius: 0 !important;
   overflow-x: hidden !important;
+  overflow-y: auto !important;
   width: 100% !important;
 }
 .portrait .tbl {
