@@ -301,24 +301,27 @@ main{flex:1;padding:18px 0 calc(var(--tab-h) + 20px + env(safe-area-inset-bottom
   overflow-wrap: break-word;
   max-width: none;
 }
-/* Стили для горизонтальной ориентации — одна строка */
-.landscape .tbl td,
-.landscape .tbl th {
+/* Принудительные стили для горизонтальной ориентации */
+body.landscape .tbl td,
+body.landscape .tbl th {
   white-space: nowrap !important;
   overflow: hidden !important;
-  text-overflow: ellipsis !important;
+  text-overflow: clip !important;
   max-width: none !important;
+  width: auto !important;
 }
 
-.landscape .tbl td[rowspan] {
+body.landscape .tbl td[rowspan],
+body.landscape .tbl td[rowspan="2"] {
   white-space: nowrap !important;
   max-width: none !important;
+  overflow: hidden !important;
+  row-span: 1 !important;
 }
 
-.landscape .tbl tr {
-  /* Принудительно одна строка на продукт */
+body.landscape .tbl tr {
+  display: table-row !important;
 }
-
 </style></head>
 
 <body>
@@ -1238,9 +1241,21 @@ async function renderReport(){
   const body = $('#repBody');
   if (!body) return;
   
-  // const isPortrait = document.body.classList.contains('portrait');
-     const isPortrait = window.innerWidth <= window.innerHeight;
-  //   const isPortrait = !(window.innerWidth > window.innerHeight || window.orientation === 90 || window.orientation === -90);
+const isPortrait = document.body.classList.contains('portrait');
+const directCheck = window.innerWidth <= window.innerHeight;
+
+// Отладка: покажем значения
+const debugInfo = document.createElement('div');
+debugInfo.style.cssText = 'position:fixed;bottom:0;left:0;right:0;background:blue;color:white;padding:8px;font-size:12px;z-index:9999;text-align:center;';
+debugInfo.innerHTML = `
+  <div>isPortrait: ${isPortrait} | directCheck: ${directCheck}</div>
+  <div>width: ${window.innerWidth} | height: ${window.innerHeight}</div>
+  <div>body class: ${document.body.className}</div>
+`;
+const oldDebug = document.getElementById('renderDebug');
+if(oldDebug) oldDebug.remove();
+document.body.appendChild(debugInfo);
+setTimeout(()=>{ const d=document.getElementById('renderDebug'); if(d) d.remove(); }, 4000);
   
   let html = '';
   
@@ -1331,19 +1346,6 @@ async function renderReport(){
   
   body.innerHTML=html;
   console.log('renderReport - done, body children:', body.children.length);
-    // Отладочный блок
-  const debugInfo = document.createElement('div');
-  debugInfo.id = 'renderDebug';
-  debugInfo.style.cssText = 'position:fixed;bottom:0;left:0;right:0;background:rgba(0,0,0,0.8);color:white;padding:8px;font-size:11px;z-index:9999;max-height:150px;overflow:auto;';
-  debugInfo.innerHTML = `
-    <div>Docs: ${state.docs.length} → ${docs.length}</div>
-    <div>Portrait: ${isPortrait}</div>
-    <div>Filters: PD=${showProdDetail} P=${showProducts} D=${showDocs}</div>
-  `;
-  const old = document.getElementById('renderDebug');
-  if(old) old.remove();
-  document.body.appendChild(debugInfo);
-  setTimeout(()=>{ const d=document.getElementById('renderDebug'); if(d) d.remove(); }, 3000);
   
 }
 
@@ -1372,10 +1374,15 @@ $('#repCopy').onclick=async()=>{
 };
 
 function updateOrientation() {
-  const isLandscape = window.innerWidth > window.innerHeight ||
-                      window.orientation === 90 ||
-                      window.orientation === -90 ||
-                      (screen.orientation && screen.orientation.type.includes('landscape'));
+  const width = window.innerWidth;
+  const height = window.innerHeight;
+  const orientation = window.orientation;
+  const screenType = screen.orientation?.type || 'unknown';
+  
+  const isLandscape = width > height ||
+                      orientation === 90 ||
+                      orientation === -90 ||
+                      screenType.includes('landscape');
 
   if (isLandscape) {
     document.body.classList.add('landscape');
@@ -1385,6 +1392,25 @@ function updateOrientation() {
     document.body.classList.remove('landscape');
   }
 
+  // Отладочный индикатор
+  const debugDiv = document.createElement('div');
+  debugDiv.id = 'orientDebug';
+  debugDiv.style.cssText = 'position:fixed;top:0;left:0;right:0;background:red;color:white;padding:8px;font-size:14px;z-index:9999;text-align:center;';
+  debugDiv.innerHTML = `
+    <div>Ширина: ${width}px, Высота: ${height}px</div>
+    <div>Orientation: ${orientation}, Screen: ${screenType}</div>
+    <div><b>${isLandscape ? 'LANDSCAPE (1 строка)' : 'PORTRAIT (2 строки)'}</b></div>
+  `;
+  const oldDebug = document.getElementById('orientDebug');
+  if (oldDebug) oldDebug.remove();
+  document.body.appendChild(debugDiv);
+  
+  setTimeout(() => {
+    const d = document.getElementById('orientDebug');
+    if (d) d.remove();
+  }, 5000);
+
+  // Управление меню при повороте
   const activeTab = document.querySelector('.tab.active');
   const tabbar = document.getElementById('tabbar');
   if (activeTab && activeTab.dataset.tab === 'report' && isLandscape) {
@@ -1393,6 +1419,15 @@ function updateOrientation() {
     if (tabbar) tabbar.style.display = '';
   }
 }
+
+window.addEventListener('resize', () => {
+  clearTimeout(window.__orientTimer);
+  window.__orientTimer = setTimeout(updateOrientation, 200);
+});
+window.addEventListener('orientationchange', () => {
+  setTimeout(updateOrientation, 300);
+});
+updateOrientation();
 
 window.addEventListener('resize', () => {
   clearTimeout(window.__orientTimer);
