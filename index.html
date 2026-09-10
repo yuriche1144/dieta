@@ -275,8 +275,14 @@ main{flex:1;padding:18px 0 calc(var(--tab-h) + 20px + env(safe-area-inset-bottom
   border: none !important;
   overflow-x: hidden !important;
   width: 100% !important;
-  min-height: calc(100vh - 140px) !important;
+  /* dvh учитывает плавающую панель адреса браузера на телефонах */
+  min-height: calc(100dvh - 140px) !important;
+  min-height: calc(100vh - 140px) !important; /* запасной вариант для старых браузеров */
   overflow-y: auto !important;
+}
+.landscape #repWrap, .landscape .report-wrap {
+  min-height: calc(100dvh - 80px) !important;
+  min-height: calc(100vh - 80px) !important;
 }
 .portrait .tbl {
   margin: 0 !important;
@@ -1291,7 +1297,10 @@ $('#repHome').onclick=()=>{
 };
 
 function updateOrientation(){
-  if(window.innerWidth > window.innerHeight){
+  // Самый надежный способ для всех современных телефонов (iOS и Android)
+  const isLandscape = window.matchMedia("(orientation: landscape)").matches || window.innerWidth > window.innerHeight;
+
+  if(isLandscape){
     document.body.classList.add('landscape');
     document.body.classList.remove('portrait');
   } else {
@@ -1299,8 +1308,14 @@ function updateOrientation(){
     document.body.classList.remove('landscape');
   }
 }
+
+// Слушаем изменения размера и ориентации
 window.addEventListener('resize', updateOrientation);
 window.addEventListener('orientationchange', updateOrientation);
+if(window.matchMedia) {
+  window.matchMedia("(orientation: landscape)").addEventListener('change', updateOrientation);
+}
+// Вызываем сразу при загрузке
 updateOrientation();
 
 (async()=>{
