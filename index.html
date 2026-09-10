@@ -1161,10 +1161,6 @@ function resetDB(){
 }
 
 async function renderReport(){
-  // Отладка: показать текущую ориентацию
-  const isPortrait = document.body.classList.contains('portrait');
-  console.log('Render report - orientation:', isPortrait ? 'portrait' : 'landscape', 'width:', window.innerWidth, 'height:', window.innerHeight);
-    // Визуальный индикатор ориентации (удалить после отладки!)
   const debugDiv = document.createElement('div');
   debugDiv.id = 'orientDebug';
   debugDiv.style.cssText = 'position:fixed;top:0;left:0;background:red;color:white;padding:4px 8px;font-size:12px;z-index:9999';
