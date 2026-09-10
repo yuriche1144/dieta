@@ -331,6 +331,9 @@ body.landscape .tbl tr {
   background: #e8e0c8 !important;
   border-top: 2px solid #d5cbb0 !important;
 }
+.doc-total-row-2 td {
+  background: #e8e0c8 !important;
+}
 </style></head>
 
 <body>
@@ -1266,7 +1269,7 @@ async function renderReport(){
       html += '<td style="'+numStyle+';color:var(--amber);font-weight:800">'+fmtK(kcal)+'</td>';
       html += '<td style="'+numStyle+'"></td>';
       html += '</tr>';
-      html += '<tr>';
+      html += '<tr class="' + (isTotal ? 'doc-total-row-2' : '') + '">';
       html += '<td style="'+numStyle+'"><b class="mp">'+fmtB(p)+'</b></td>';
       html += '<td style="'+numStyle+'"><b class="mf">'+fmtZh(f)+'</b></td>';
       html += '<td style="'+numStyle+'"><b class="mc">'+fmtU(c)+'</b></td>';
