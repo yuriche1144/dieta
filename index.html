@@ -301,6 +301,24 @@ main{flex:1;padding:18px 0 calc(var(--tab-h) + 20px + env(safe-area-inset-bottom
   overflow-wrap: break-word;
   max-width: none;
 }
+/* Стили для горизонтальной ориентации — одна строка */
+.landscape .tbl td,
+.landscape .tbl th {
+  white-space: nowrap !important;
+  overflow: hidden !important;
+  text-overflow: ellipsis !important;
+  max-width: none !important;
+}
+
+.landscape .tbl td[rowspan] {
+  white-space: nowrap !important;
+  max-width: none !important;
+}
+
+.landscape .tbl tr {
+  /* Принудительно одна строка на продукт */
+}
+
 </style></head>
 
 <body>
