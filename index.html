@@ -12,7 +12,7 @@
 <link rel="manifest" href="manifest.json">
 <link rel="icon" type="image/png" sizes="512x512" href="icon-512.png">
 <link rel="apple-touch-icon" href="icon-512.png">
-<title>DIETA 1.0.33б — журнал питания и веса</title>
+<title>DIETA 1.0.34 — журнал питания и веса</title>
 <style>
 :root{
   --bg:#f4efe2; --surface:#fbf8ef; --surface2:#efe8d6; --ink:#24301f; --muted:#71805f;
@@ -250,6 +250,7 @@ main{flex:1;padding:18px 0 calc(var(--tab-h) + 20px + env(safe-area-inset-bottom
 #d-splash .s-ver{margin-top:14px;font-size:12px;font-weight:800;color:var(--green-deep);border:1.5px solid var(--green-deep);border-radius:999px;padding:4px 14px;letter-spacing:.08em}
 #d-splash .s-cursor{margin-top:22px;width:9px;height:22px;background:var(--amber);animation:blink 1s steps(1) infinite}
 @keyframes blink{50%{opacity:0}}
+
 /* Убираем лишние отступы и центрирование у отчёта */
 #screen-report {
   padding: 0 !important;
@@ -268,9 +269,10 @@ main{flex:1;padding:18px 0 calc(var(--tab-h) + 20px + env(safe-area-inset-bottom
   margin-top: 0 !important;
   padding-top: 0 !important;
 }
-#repWrap {
+#repWrap, .report-wrap {
   margin: 0 !important;
   border-radius: 0 !important;
+  border: none !important;
   overflow-x: hidden !important;
   width: 100% !important;
 }
@@ -292,12 +294,13 @@ main{flex:1;padding:18px 0 calc(var(--tab-h) + 20px + env(safe-area-inset-bottom
   max-width: none;
 }
 </style></head>
+
 <body>
 
 <div id="d-splash">
   <div class="s-logo">DIETA<b>.</b></div>
   <div class="s-sub">журнал питания</div>
-  <div class="s-ver">v 1.0.33б</div>
+  <div class="s-ver">v 1.0.34</div>
   <div class="s-cursor"></div>
 </div>
 
@@ -458,7 +461,7 @@ window.__dietaScriptInfo = window.__dietaScriptInfo || function(){
 };
 (function () {
 'use strict';
-var APP_VERSION = '1.0.33б';
+var APP_VERSION = '1.0.34';
 var CLAIMED = window.__DIETA_CLAIMED_VERSION;
 function verGT(a,b){ var pa=a.split('.').map(Number), pb=b.split('.').map(Number);
   for(var i=0;i<3;i++){ if((pa[i]||0)>(pb[i]||0)) return true; if((pa[i]||0)<(pb[i]||0)) return false; } return false; }
