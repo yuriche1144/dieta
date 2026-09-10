@@ -12,7 +12,7 @@
 <link rel="manifest" href="manifest.json">
 <link rel="icon" type="image/png" sizes="512x512" href="icon-512.png">
 <link rel="apple-touch-icon" href="icon-512.png">
-<title>DIETA 1.0.40 — журнал питания и веса</title>
+<title>DIETA 1.0.41 — журнал питания и веса</title>
 <style>
 :root{
   --bg:#f4efe2; --surface:#fbf8ef; --surface2:#efe8d6; --ink:#24301f; --muted:#71805f;
@@ -322,6 +322,15 @@ body.landscape .tbl td[rowspan="2"] {
 body.landscape .tbl tr {
   display: table-row !important;
 }
+.doc-total-row {
+  background: #e8e0c8 !important;
+  font-weight: 700 !important;
+}
+
+.doc-total-row td {
+  background: #e8e0c8 !important;
+  border-top: 2px solid #d5cbb0 !important;
+}
 </style></head>
 
 <body>
@@ -329,7 +338,7 @@ body.landscape .tbl tr {
 <div id="d-splash">
   <div class="s-logo">DIETA<b>.</b></div>
   <div class="s-sub">журнал питания</div>
-  <div class="s-ver">v 1.0.40</div>
+  <div class="s-ver">v 1.0.41</div>
   <div class="s-cursor"></div>
 </div>
 
@@ -408,7 +417,7 @@ body.landscape .tbl tr {
 <table class="tbl">
   <thead>
     <tr id="tblHeadLand">
-      <th>Продукт</th><th>Кол-во</th><th>Ккал</th><th>Белки</th><th>Жиры</th><th>Углев</th>
+      <th>Продукт</th><th>Грамм</th><th>Ккал</th><th>Белки</th><th>Жиры</th><th>Углев</th>
     </tr>
     <tr id="tblHeadPort" style="display:none">
       <th colspan="1" style="text-align:left;width:40%">ПРОДУКТЫ</th>
@@ -490,7 +499,7 @@ window.__dietaScriptInfo = window.__dietaScriptInfo || function(){
 };
 (function () {
 'use strict';
-var APP_VERSION = '1.0.40';
+var APP_VERSION = '1.0.41';
 var CLAIMED = window.__DIETA_CLAIMED_VERSION;
 function verGT(a,b){ var pa=a.split('.').map(Number), pb=b.split('.').map(Number);
   for(var i=0;i<3;i++){ if((pa[i]||0)>(pb[i]||0)) return true; if((pa[i]||0)<(pb[i]||0)) return false; } return false; }
@@ -1251,7 +1260,7 @@ async function renderReport(){
       const nameStyle = 'width:40%; vertical-align:top; padding:6px 8px; font-weight:'+(isTotal?'800':'600')+'; white-space:normal; overflow-wrap:anywhere;';
       const numStyle = 'width:20%; text-align:right; padding:6px 4px; font-size:12px;';
       
-      html += '<tr>';
+      html += '<tr class="' + (isTotal ? 'doc-total-row' : '') + '">';
       html += '<td rowspan="2" style="'+nameStyle+'">'+esc(name)+'</td>';
       html += '<td style="'+numStyle+'">'+(qty?fmtG(qty):'')+'</td>';
       html += '<td style="'+numStyle+';color:var(--amber);font-weight:800">'+fmtK(kcal)+'</td>';
@@ -1263,8 +1272,7 @@ async function renderReport(){
       html += '<td style="'+numStyle+'"><b class="mc">'+fmtU(c)+'</b></td>';
       html += '</tr>';
     } else {
-      html += '<tr><td style="font-weight:'+(isTotal?'800':'600')+'">'+esc(name)+'</td><td class="num">'+fmtG(qty)+'</td><td class="num ck">'+fmtK(kcal)+'</td><td class="num">'+fmtB(p)+'</td><td class="num">'+fmtZh(f)+'</td><td class="num">'+fmtU(c)+'</td></tr>';
-    }
+      html += '<tr class="' + (isTotal ? 'doc-total-row' : '') + '"><td style="font-weight:'+(isTotal?'800':'600')+'">'+esc(name)+'</td><td class="num">'+fmtG(qty)+'</td><td class="num ck">'+fmtK(kcal)+'</td><td class="num">'+fmtB(p)+'</td><td class="num">'+fmtZh(f)+'</td><td class="num">'+fmtU(c)+'</td></tr>';    }
   };
 
   if(showProdDetail){
