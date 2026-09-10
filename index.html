@@ -1241,21 +1241,7 @@ async function renderReport(){
   const body = $('#repBody');
   if (!body) return;
   
-const isPortrait = document.body.classList.contains('portrait');
-const directCheck = window.innerWidth <= window.innerHeight;
-
-// Отладка: покажем значения
-const debugInfo = document.createElement('div');
-debugInfo.style.cssText = 'position:fixed;bottom:0;left:0;right:0;background:blue;color:white;padding:8px;font-size:12px;z-index:9999;text-align:center;';
-debugInfo.innerHTML = `
-  <div>isPortrait: ${isPortrait} | directCheck: ${directCheck}</div>
-  <div>width: ${window.innerWidth} | height: ${window.innerHeight}</div>
-  <div>body class: ${document.body.className}</div>
-`;
-const oldDebug = document.getElementById('renderDebug');
-if(oldDebug) oldDebug.remove();
-document.body.appendChild(debugInfo);
-setTimeout(()=>{ const d=document.getElementById('renderDebug'); if(d) d.remove(); }, 4000);
+  const isPortrait = document.body.classList.contains('portrait');
   
   let html = '';
   
@@ -1392,31 +1378,11 @@ function updateOrientation() {
     document.body.classList.remove('landscape');
   }
 
-  // Отладочный индикатор
-  const debugDiv = document.createElement('div');
-  debugDiv.id = 'orientDebug';
-  debugDiv.style.cssText = 'position:fixed;top:0;left:0;right:0;background:red;color:white;padding:8px;font-size:14px;z-index:9999;text-align:center;';
-  debugDiv.innerHTML = `
-    <div>Ширина: ${width}px, Высота: ${height}px</div>
-    <div>Orientation: ${orientation}, Screen: ${screenType}</div>
-    <div><b>${isLandscape ? 'LANDSCAPE (1 строка)' : 'PORTRAIT (2 строки)'}</b></div>
-  `;
-  const oldDebug = document.getElementById('orientDebug');
-  if (oldDebug) oldDebug.remove();
-  document.body.appendChild(debugDiv);
-  
-  setTimeout(() => {
-    const d = document.getElementById('orientDebug');
-    if (d) d.remove();
-  }, 5000);
-
-  // Принудительно перерисовать отчёт с БОЛЬШОЙ задержкой для iPhone
+  // Перерисовать отчёт при смене ориентации (с задержкой для iPhone)
   const activeTab = document.querySelector('.tab.active');
   if (activeTab && activeTab.dataset.tab === 'report') {
     setTimeout(() => {
-      // Второй setTimeout для гарантии
       setTimeout(() => {
-        console.log('Re-rendering report after orientation change');
         renderReport();
       }, 200);
     }, 500);
@@ -1430,15 +1396,6 @@ function updateOrientation() {
     if (tabbar) tabbar.style.display = '';
   }
 }
-
-window.addEventListener('resize', () => {
-  clearTimeout(window.__orientTimer);
-  window.__orientTimer = setTimeout(updateOrientation, 200);
-});
-window.addEventListener('orientationchange', () => {
-  setTimeout(updateOrientation, 300);
-});
-updateOrientation();
 
 window.addEventListener('resize', () => {
   clearTimeout(window.__orientTimer);
