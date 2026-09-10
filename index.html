@@ -1288,18 +1288,14 @@ $('#repHome').onclick=()=>{
   $$('.tab')[0].classList.add('active');
   $$('.screen').forEach(s=>s.classList.remove('active'));
   $('#screen-journal').classList.add('active');
-  
-  // Восстановить отображение totalsBar и tabbar
-  const totalsBar = document.getElementById('totalsBar');
-  const tabbar = document.getElementById('tabbar');
-  if(totalsBar) totalsBar.style.display = '';
-  if(tabbar) tabbar.style.display = '';
 };
 
 function updateOrientation(){
-  // Самый надежный способ для всех современных телефонов (iOS и Android)
-  const isLandscape = window.matchMedia("(orientation: landscape)").matches || window.innerWidth > window.innerHeight;
-
+  const isLandscape = window.innerWidth > window.innerHeight || 
+                      window.orientation === 90 || 
+                      window.orientation === -90 ||
+                      screen.orientation?.type.includes('landscape');
+  
   if(isLandscape){
     document.body.classList.add('landscape');
     document.body.classList.remove('portrait');
@@ -1307,16 +1303,32 @@ function updateOrientation(){
     document.body.classList.add('portrait');
     document.body.classList.remove('landscape');
   }
+  
+  // Скрыть tabbar в горизонтальной ориентации отчёта
+  const activeTab = document.querySelector('.tab.active');
+  if(activeTab && activeTab.dataset.tab === 'report' && document.body.classList.contains('landscape')) {
+    const tabbar = document.getElementById('tabbar');
+    if(tabbar) tabbar.style.display = 'none';
+  } else {
+    const tabbar = document.getElementById('tabbar');
+    if(tabbar) tabbar.style.display = '';
+  }
 }
 
-// Слушаем изменения размера и ориентации
+window.addEventListener('resize', ()=>{
+  clearTimeout(window.__orientationTimeout);
+  window.__orientationTimeout = setTimeout(updateOrientation, 150);
+});
+window.addEventListener('orientationchange', updateOrientation);
+if(screen.orientation){
+  screen.orientation.addEventListener('change', updateOrientation);
+}
+updateOrientation();
+
 window.addEventListener('resize', updateOrientation);
 window.addEventListener('orientationchange', updateOrientation);
-if(window.matchMedia) {
-  window.matchMedia("(orientation: landscape)").addEventListener('change', updateOrientation);
-}
-// Вызываем сразу при загрузке
 updateOrientation();
+
 
 (async()=>{
   try{ await DB.open(); }catch(e){ DB.useLS=true; }
