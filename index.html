@@ -1271,11 +1271,18 @@ $('#repCopy').onclick=async()=>{
     toast('Отчёт скопирован','ok');
   }catch(e){ toast('Не удалось скопировать','err'); }
 };
+
 $('#repHome').onclick=()=>{
   $$('.tab').forEach(x=>x.classList.remove('active'));
   $$('.tab')[0].classList.add('active');
   $$('.screen').forEach(s=>s.classList.remove('active'));
   $('#screen-journal').classList.add('active');
+  
+  // Восстановить отображение totalsBar и tabbar
+  const totalsBar = document.getElementById('totalsBar');
+  const tabbar = document.getElementById('tabbar');
+  if(totalsBar) totalsBar.style.display = '';
+  if(tabbar) tabbar.style.display = '';
 };
 
 function updateOrientation(){
