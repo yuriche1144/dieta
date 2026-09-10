@@ -1306,6 +1306,8 @@ $('#repCopy').onclick=async()=>{
 };
 
 function updateOrientation(){
+  const wasPortrait = document.body.classList.contains('portrait');
+  
   const isLandscape = window.innerWidth > window.innerHeight ||
                       window.orientation === 90 ||
                       window.orientation === -90 ||
@@ -1319,8 +1321,13 @@ function updateOrientation(){
     document.body.classList.remove('landscape');
   }
 
-  // Управление tabbar в отчёте
+  // Если ориентация изменилась и мы в разделе Отчёт — перерисовать таблицу!
   const activeTab = document.querySelector('.tab.active');
+  if(activeTab && activeTab.dataset.tab === 'report' && wasPortrait !== isLandscape) {
+    setTimeout(renderReport, 100);
+  }
+
+  // Управление tabbar в отчёте
   if(activeTab && activeTab.dataset.tab === 'report' && document.body.classList.contains('landscape')) {
     const tabbar = document.getElementById('tabbar');
     if(tabbar) tabbar.style.display = 'none';
