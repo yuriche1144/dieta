@@ -1290,12 +1290,27 @@ $('#repHome').onclick=()=>{
   $('#screen-journal').classList.add('active');
 };
 
+$('#repCopy').onclick=async()=>{
+  const body=$('#repBody');
+  const rows=body.querySelectorAll('tr');
+  let text='Отчёт DIETA\n\n';
+  rows.forEach(r=>{
+    const cells=r.querySelectorAll('td,th');
+    const vals=Array.from(cells).map(c=>c.textContent.trim());
+    text+=vals.join('\t')+'\n';
+  });
+  try{
+    await navigator.clipboard.writeText(text);
+    toast('Отчёт скопирован','ok');
+  }catch(e){ toast('Не удалось скопировать','err'); }
+};
+
 function updateOrientation(){
-  const isLandscape = window.innerWidth > window.innerHeight || 
-                      window.orientation === 90 || 
+  const isLandscape = window.innerWidth > window.innerHeight ||
+                      window.orientation === 90 ||
                       window.orientation === -90 ||
                       screen.orientation?.type.includes('landscape');
-  
+
   if(isLandscape){
     document.body.classList.add('landscape');
     document.body.classList.remove('portrait');
@@ -1303,8 +1318,8 @@ function updateOrientation(){
     document.body.classList.add('portrait');
     document.body.classList.remove('landscape');
   }
-  
-  // Скрыть tabbar в горизонтальной ориентации отчёта
+
+  // Управление tabbar в отчёте
   const activeTab = document.querySelector('.tab.active');
   if(activeTab && activeTab.dataset.tab === 'report' && document.body.classList.contains('landscape')) {
     const tabbar = document.getElementById('tabbar');
@@ -1315,20 +1330,9 @@ function updateOrientation(){
   }
 }
 
-window.addEventListener('resize', ()=>{
-  clearTimeout(window.__orientationTimeout);
-  window.__orientationTimeout = setTimeout(updateOrientation, 150);
-});
-window.addEventListener('orientationchange', updateOrientation);
-if(screen.orientation){
-  screen.orientation.addEventListener('change', updateOrientation);
-}
-updateOrientation();
-
 window.addEventListener('resize', updateOrientation);
 window.addEventListener('orientationchange', updateOrientation);
 updateOrientation();
-
 
 (async()=>{
   try{ await DB.open(); }catch(e){ DB.useLS=true; }
