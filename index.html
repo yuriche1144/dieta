@@ -12,7 +12,7 @@
 <link rel="manifest" href="manifest.json">
 <link rel="icon" type="image/png" sizes="512x512" href="icon-512.png">
 <link rel="apple-touch-icon" href="icon-512.png">
-<title>DIETA 1.0.42 — журнал питания и веса</title>
+<title>DIETA 1.0.44 — журнал питания и веса</title>
 <style>
 :root{
   --bg:#f4efe2; --surface:#fbf8ef; --surface2:#efe8d6; --ink:#24301f; --muted:#71805f;
@@ -276,8 +276,8 @@ main{flex:1;padding:18px 0 calc(var(--tab-h) + 20px + env(safe-area-inset-bottom
   overflow-x: hidden !important;
   width: 100% !important;
   /* dvh учитывает плавающую панель адреса браузера на телефонах */
-  min-height: calc(100dvh - 140px) !important;
-  min-height: calc(100vh - 140px) !important; /* запасной вариант для старых браузеров */
+  min-height: calc(100dvh - 80px) !important;
+  min-height: calc(100vh - 80px) !important; /* запасной вариант для старых браузеров */
   overflow-y: auto !important;
 }
 .landscape #repWrap, .landscape .report-wrap {
@@ -341,7 +341,7 @@ body.landscape .tbl tr {
 <div id="d-splash">
   <div class="s-logo">DIETA<b>.</b></div>
   <div class="s-sub">журнал питания</div>
-  <div class="s-ver">v 1.0.42</div>
+  <div class="s-ver">v 1.0.44</div>
   <div class="s-cursor"></div>
 </div>
 
@@ -394,7 +394,7 @@ body.landscape .tbl tr {
 
   <section class="screen" id="screen-report">
     <div class="h-row">
-      <h1 class="h-title">Отчёт</h1>
+      <h1 class="h-title" style="font-size:16px;">Отчёт</h1>
       <div class="rep-headbtns">
         <button class="btn ghost sm" id="repFilterBtn" style="white-space:nowrap"><svg style="width:16px;height:16px"><use href="#i-chevr"/></svg>Фильтры</button>
         <button class="btn amber sm icon-only" id="repCopy" title="Копировать отчёт" aria-label="Копировать отчёт"><svg><use href="#i-copy"/></svg></button>
@@ -502,7 +502,7 @@ window.__dietaScriptInfo = window.__dietaScriptInfo || function(){
 };
 (function () {
 'use strict';
-var APP_VERSION = '1.0.42';
+var APP_VERSION = '1.0.44';
 var CLAIMED = window.__DIETA_CLAIMED_VERSION;
 function verGT(a,b){ var pa=a.split('.').map(Number), pb=b.split('.').map(Number);
   for(var i=0;i<3;i++){ if((pa[i]||0)>(pb[i]||0)) return true; if((pa[i]||0)<(pb[i]||0)) return false; } return false; }
@@ -1246,9 +1246,16 @@ async function renderReport(){
   const showDays = $('#fDays') ? $('#fDays').checked : true;
   const showTotal = $('#fTotal') ? $('#fTotal').checked : true;
   
-  let docs = (state && Array.isArray(state.docs)) ? state.docs : [];
-  if (from) docs = docs.filter(d => d.date >= from);
-  if (to) docs = docs.filter(d => d.date <= to);
+let docs = (state && Array.isArray(state.docs)) ? state.docs : [];
+if (from) docs = docs.filter(d => d.date >= from);
+if (to) docs = docs.filter(d => d.date <= to);
+docs.sort((a, b) => {
+  const ia = MEALS.indexOf(a.meal), ib = MEALS.indexOf(b.meal);
+  if (ia !== ib) return ia - ib;
+  const ta = a.time || '', tb = b.time || '';
+  if ((ta === '') !== (tb === '')) return ta === '' ? -1 : 1;
+  return ta.localeCompare(tb);
+});
   
   const body = $('#repBody');
   if (!body) return;
@@ -1260,13 +1267,13 @@ async function renderReport(){
   // Вспомогательная функция для строки продукта
   const pRow = (name, qty, kcal, p, f, c, isTotal=false) => {
     if(isPortrait){
-      const nameStyle = 'width:40%; vertical-align:top; padding:6px 8px; font-weight:'+(isTotal?'800':'600')+'; white-space:normal; overflow-wrap:anywhere;';
+      const nameStyle = 'width:40%; vertical-align:top; padding:6px 8px; font-weight:'+(isTotal?'800':'600')+'; font-size:'+(isTotal?'11.5px':'inherit')+'; white-space:normal; overflow-wrap:anywhere;';
       const numStyle = 'width:20%; text-align:right; padding:6px 4px; font-size:12px;';
       
       html += '<tr class="' + (isTotal ? 'doc-total-row' : '') + '">';
       html += '<td rowspan="2" style="'+nameStyle+'">'+esc(name)+'</td>';
       html += '<td style="'+numStyle+';font-weight:'+(isTotal?'800':'700')+'">'+(qty?fmtG(qty):'')+'</td>';
-      html += '<td style="'+numStyle+';color:var(--amber);font-weight:'+(isTotal?'800':'700')+'">'+fmtK(kcal)+'</td>';
+      html += '<td style="'+numStyle+'">'+fmtK(kcal)+'</td>';
       html += '<td style="'+numStyle+'"></td>';
       html += '</tr>';
       html += '<tr class="' + (isTotal ? 'doc-total-row-2' : '') + '">';
@@ -1275,7 +1282,8 @@ async function renderReport(){
       html += '<td style="'+numStyle+'">'+(isTotal?'<b class="mc">':'')+fmtU(c)+(isTotal?'</b>':'')+'</td>';
       html += '</tr>';
     } else {
-      html += '<tr class="' + (isTotal ? 'doc-total-row' : '') + '"><td style="font-weight:'+(isTotal?'800':'600')+'">'+esc(name)+'</td><td class="num">'+fmtG(qty)+'</td><td class="num ck">'+fmtK(kcal)+'</td><td class="num">'+fmtB(p)+'</td><td class="num">'+fmtZh(f)+'</td><td class="num">'+fmtU(c)+'</td></tr>';    }
+      html += '<tr class="' + (isTotal ? 'doc-total-row' : '') + '"><td style="font-weight:'+(isTotal?'800':'600')+'">'+esc(name)+'</td><td class="num">'+fmtG(qty)+'</td><td class="num">'+fmtK(kcal)+'</td><td class="num">'+fmtB(p)+'</td><td class="num">'+fmtZh(f)+'</td><td class="num">'+fmtU(c)+'</td></tr>';
+	}
   };
 
   if(showProdDetail){
@@ -1371,6 +1379,9 @@ $('#repCopy').onclick=async()=>{
 };
 
 function updateOrientation() {
+  // FOR TESTING ON PC: раскомментируйте ОДНУ из строк ниже для принудительной ориентации
+  // document.body.classList.add('landscape'); document.body.classList.remove('portrait'); return;  // LANDSCAPE
+  // document.body.classList.add('portrait'); document.body.classList.remove('landscape'); return;   // PORTRAIT
   const width = window.innerWidth;
   const height = window.innerHeight;
   const orientation = window.orientation;
