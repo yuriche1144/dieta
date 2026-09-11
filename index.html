@@ -1289,7 +1289,8 @@ docs.sort((a, b) => {
   if(showProdDetail){
     // html+='<tr class="sec"><td colspan="'+(isPortrait?'4':'6')+'">Продукты в документах</td></tr>';
     docs.forEach(d=>{
-      html+='<tr class="dhead"><td colspan="'+(isPortrait?'4':'6')+'">'+esc(d.meal)+' · '+dmy(d.date)+(d.time?' '+d.time:'')+'</td></tr>';
+const dheadStyle = isPortrait ? '' : 'font-size:12px !important; font-weight:700 !important;';
+html+='<tr class="dhead"><td colspan="'+(isPortrait?'4':'6')+'" style="'+dheadStyle+'">'+esc(d.meal)+' • '+dmy(d.date)+(d.time?' '+d.time:'')+'</td></tr>';
       d.rows.forEach(r=> pRow(r.name, r.qty, r.k, r.p, r.f, r.c));
       const t=sumRows(d.rows);
       pRow('Итого', t.qty, t.kcal, t.p, t.f, t.c, true);
