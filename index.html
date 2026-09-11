@@ -12,7 +12,7 @@
 <link rel="manifest" href="manifest.json">
 <link rel="icon" type="image/png" sizes="512x512" href="icon-512.png">
 <link rel="apple-touch-icon" href="icon-512.png">
-<title>DIETA 1.0.45 — журнал питания и веса</title>
+<title>DIETA 1.0.46 — журнал питания и веса</title>
 <style>
 :root{
   --bg:#f4efe2; --surface:#fbf8ef; --surface2:#efe8d6; --ink:#24301f; --muted:#71805f;
@@ -130,45 +130,8 @@ main{flex:1;padding:18px 0 calc(var(--tab-h) + 20px + env(safe-area-inset-bottom
 .tbl td{padding:6px 6px;border-bottom:1px solid var(--line);text-align:right;white-space:nowrap}
 .tbl td:first-child{text-align:left;font-weight:600;white-space:normal;overflow-wrap:anywhere;min-width:12ch}
 .tbl .ck{color:var(--amber);font-weight:800}
-/* .tbl tr.sec td{background:var(--green-soft);color:var(--green-deep);font-weight:800;font-size:11.5px;letter-spacing:.07em;text-transform:uppercase;text-align:left;padding:7px 6px} */
-.tbl tr.sec td {
-  background: var(--green-soft);
-  color: var(--green-deep);
-  letter-spacing: .07em;
-  text-transform: uppercase;
-  text-align: left;
-  padding: 7px 6px;
-}
-
-.portrait .tbl tr.sec td {
-  font-size: 11.5px;
-  font-weight: 800;
-}
-
-.landscape .tbl tr.sec td {
-  font-size: 11px;
-  font-weight: 800;
-}
-
-/* .tbl tr.dhead td{background:var(--amber-soft);color:#8a5a17;font-weight:800;font-size:11px;letter-spacing:.05em;text-align:left;padding:6px} */
-.tbl tr.dhead td {
-  background: var(--amber-soft);
-  color: #8a5a17;
-  letter-spacing: .05em;
-  text-align: left;
-  padding: 6px;
-}
-
-.portrait .tbl tr.dhead td {
-  font-size: 11px;
-  font-weight: 800;
-}
-
-.landscape .tbl tr.dhead td {
-  font-size: 12px;
-  font-weight: 700;
-}
-
+.tbl tr.sec td{background:var(--green-soft);color:var(--green-deep);font-weight:800;font-size:11.5px;letter-spacing:.07em;text-transform:uppercase;text-align:left;padding:7px 6px}
+.tbl tr.dhead td{background:var(--amber-soft);color:#8a5a17;font-weight:800;font-size:11px;letter-spacing:.05em;text-align:left;padding:6px}
 .tbl tr.dtotal td{background:#f3edd9;font-weight:800;color:var(--green-deep)}
 .tbl tr.daytotal td{background:#e7dfc4;font-weight:800;color:#6b4d12}
 .tbl tr.avg td{background:var(--amber-soft);font-weight:800}
@@ -346,7 +309,6 @@ body.landscape .tbl th {
   text-overflow: clip !important;
   max-width: none !important;
   width: auto !important;
-  font-size: 12px !important;
 }
 
 body.landscape .tbl td[rowspan],
@@ -372,16 +334,6 @@ body.landscape .tbl tr {
 .doc-total-row-2 td {
   background: #e8e0c8 !important;
 }
-
-body.landscape .tbl tr.sec td {
-  font-size: 11px !important;
-}
-
-body.landscape .doc-total-row td,
-body.landscape .doc-total-row-2 td {
-  font-size: 12px !important;
-  font-weight: 700 !important;
-}
 </style></head>
 
 <body>
@@ -389,7 +341,7 @@ body.landscape .doc-total-row-2 td {
 <div id="d-splash">
   <div class="s-logo">DIETA<b>.</b></div>
   <div class="s-sub">журнал питания</div>
-  <div class="s-ver">v 1.0.45</div>
+  <div class="s-ver">v 1.0.46</div>
   <div class="s-cursor"></div>
 </div>
 
@@ -550,7 +502,7 @@ window.__dietaScriptInfo = window.__dietaScriptInfo || function(){
 };
 (function () {
 'use strict';
-var APP_VERSION = '1.0.45';
+var APP_VERSION = '1.0.46';
 var CLAIMED = window.__DIETA_CLAIMED_VERSION;
 function verGT(a,b){ var pa=a.split('.').map(Number), pb=b.split('.').map(Number);
   for(var i=0;i<3;i++){ if((pa[i]||0)>(pb[i]||0)) return true; if((pa[i]||0)<(pb[i]||0)) return false; } return false; }
@@ -1309,20 +1261,7 @@ docs.sort((a, b) => {
   if (!body) return;
   
   const isPortrait = document.body.classList.contains('portrait');
-
-// Отладка ориентации
-const debugOrient = document.createElement('div');
-debugOrient.style.cssText = 'position:fixed;top:0;left:0;right:0;background:red;color:white;padding:8px;font-size:14px;z-index:9999;text-align:center;';
-debugOrient.innerHTML = `
-  <div>isPortrait: ${isPortrait}</div>
-  <div>body class: ${document.body.className}</div>
-  <div>width: ${window.innerWidth} x height: ${window.innerHeight}</div>
-`;
-const oldDebug = document.getElementById('debugOrient');
-if (oldDebug) oldDebug.remove();
-document.body.appendChild(debugOrient);
-setTimeout(() => { const d = document.getElementById('debugOrient'); if (d) d.remove(); }, 5000);
-// Конец отладочного вывода  
+  
   let html = '';
   
   // Вспомогательная функция для строки продукта
@@ -1334,7 +1273,7 @@ setTimeout(() => { const d = document.getElementById('debugOrient'); if (d) d.re
       html += '<tr class="' + (isTotal ? 'doc-total-row' : '') + '">';
       html += '<td rowspan="2" style="'+nameStyle+'">'+esc(name)+'</td>';
       html += '<td style="'+numStyle+';font-weight:'+(isTotal?'800':'700')+'">'+(qty?fmtG(qty):'')+'</td>';
-      html += '<td style="'+numStyle+'">'+fmtK(kcal)+'</td>';
+      html += '<td style="'+numStyle+';font-weight:'+(isTotal?'800':'700')+'">'+fmtK(kcal)+'</td>';
       html += '<td style="'+numStyle+'"></td>';
       html += '</tr>';
       html += '<tr class="' + (isTotal ? 'doc-total-row-2' : '') + '">';
@@ -1350,10 +1289,7 @@ setTimeout(() => { const d = document.getElementById('debugOrient'); if (d) d.re
   if(showProdDetail){
     // html+='<tr class="sec"><td colspan="'+(isPortrait?'4':'6')+'">Продукты в документах</td></tr>';
     docs.forEach(d=>{
-//      html+='<tr class="dhead"><td colspan="'+(isPortrait?'4':'6')+'">'+esc(d.meal)+' · '+dmy(d.date)+(d.time?' '+d.time:'')+'</td></tr>';
-const headStyle = isPortrait ? '' : 'font-size:12px; font-weight:700;';
-html+='<tr class="dhead"><td colspan="'+(isPortrait?'4':'6')+'" style="'+headStyle+'">'+esc(d.meal)+' • '+dmy(d.date)+(d.time?' • '+d.time:'')+'</td></tr>';
-
+      html+='<tr class="dhead"><td colspan="'+(isPortrait?'4':'6')+'">'+esc(d.meal)+' · '+dmy(d.date)+(d.time?' '+d.time:'')+'</td></tr>';
       d.rows.forEach(r=> pRow(r.name, r.qty, r.k, r.p, r.f, r.c));
       const t=sumRows(d.rows);
       pRow('Итого', t.qty, t.kcal, t.p, t.f, t.c, true);
@@ -1445,7 +1381,7 @@ $('#repCopy').onclick=async()=>{
 function updateOrientation() {
   // FOR TESTING ON PC: раскомментируйте ОДНУ из строк ниже для принудительной ориентации
   // document.body.classList.add('landscape'); document.body.classList.remove('portrait'); return;  // LANDSCAPE
-  // document.body.classList.add('portrait'); document.body.classList.remove('landscape'); return;   // PORTRAIT
+   document.body.classList.add('portrait'); document.body.classList.remove('landscape'); return;   // PORTRAIT
   const width = window.innerWidth;
   const height = window.innerHeight;
   const orientation = window.orientation;
