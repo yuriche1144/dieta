@@ -1295,7 +1295,7 @@ const nameStyle = 'width:40%; vertical-align:top; padding:6px 8px; font-weight:'
   if(showProdDetail){
     // html+='<tr class="sec"><td colspan="'+(isPortrait?'4':'6')+'">Продукты в документах</td></tr>';
     docs.forEach(d=>{
-const dheadStyle = 'font-size:11px !important; font-weight:800 !important; background:lime !important;';
+const dheadStyle = 'font-size:11px !important; font-weight:800 !important; background:lime !important; -webkit-text-size-adjust:100% !important; text-size-adjust:100% !important;';
 html += '<tr class="dhead"><td colspan="' + (isPortrait ? '4' : '6') + '" style="' + dheadStyle + '">' + esc(d.meal) + ' • ' + dmy(d.date) + (d.time ? ' ' + d.time : '') + '</td></tr>';
 
       d.rows.forEach(r=> pRow(r.name, r.qty, r.k, r.p, r.f, r.c));
