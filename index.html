@@ -302,6 +302,7 @@ main{flex:1;padding:18px 0 calc(var(--tab-h) + 20px + env(safe-area-inset-bottom
   max-width: none;
 }
 /* Принудительные стили для горизонтальной ориентации */
+/* Принудительные стили для горизонтальной ориентации */
 body.landscape .tbl td,
 body.landscape .tbl th {
   white-space: nowrap !important;
@@ -309,6 +310,7 @@ body.landscape .tbl th {
   text-overflow: clip !important;
   max-width: none !important;
   width: auto !important;
+  font-size: 12px !important;
 }
 
 body.landscape .tbl td[rowspan],
@@ -333,6 +335,20 @@ body.landscape .tbl tr {
 }
 .doc-total-row-2 td {
   background: #e8e0c8 !important;
+}
+body.landscape .dhead td {
+  font-size: 12px !important;
+  font-weight: 700 !important;
+}
+
+body.landscape .tbl tr.sec td {
+  font-size: 11px !important;
+}
+
+body.landscape .doc-total-row td,
+body.landscape .doc-total-row-2 td {
+  font-size: 12px !important;
+  font-weight: 700 !important;
 }
 </style></head>
 
