@@ -1273,7 +1273,7 @@ docs.sort((a, b) => {
   // Вспомогательная функция для строки продукта
   const pRow = (name, qty, kcal, p, f, c, isTotal=false) => {
     if(isPortrait){
-      const nameStyle = 'width:40%; vertical-align:top; padding:6px 8px; font-weight:'+(isTotal?'800':'600')+'; font-size:'+(isTotal?'11.5px':'inherit')+'; white-space:normal; overflow-wrap:anywhere;';
+const nameStyle = 'width:40%; vertical-align:top; padding:6px 8px; font-weight:'+(isTotal?'800':'600')+'; font-size:'+(isTotal?(isPortrait?'11px':'12px'):'inherit')+'; white-space:normal; overflow-wrap:anywhere;';
       const numStyle = 'width:20%; text-align:right; padding:6px 4px; font-size:12px;';
       
       html += '<tr class="' + (isTotal ? 'doc-total-row' : '') + '">';
@@ -1295,7 +1295,7 @@ docs.sort((a, b) => {
   if(showProdDetail){
     // html+='<tr class="sec"><td colspan="'+(isPortrait?'4':'6')+'">Продукты в документах</td></tr>';
     docs.forEach(d=>{
-const dheadStyle = isPortrait ? '' : 'font-size:11px !important; font-weight:700 !important;';
+const dheadStyle = isPortrait ? 'font-size:11px !important; font-weight:800 !important;' : 'font-size:12px !important; font-weight:700 !important;';
 html += '<tr class="dhead"><td colspan="' + (isPortrait ? '4' : '6') + '" style="' + dheadStyle + '">' + esc(d.meal) + ' • ' + dmy(d.date) + (d.time ? ' ' + d.time : '') + '</td></tr>';
 
       d.rows.forEach(r=> pRow(r.name, r.qty, r.k, r.p, r.f, r.c));
