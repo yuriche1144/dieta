@@ -1289,7 +1289,10 @@ docs.sort((a, b) => {
   if(showProdDetail){
     // html+='<tr class="sec"><td colspan="'+(isPortrait?'4':'6')+'">Продукты в документах</td></tr>';
     docs.forEach(d=>{
-const dheadStyle = isPortrait ? '' : 'font-size:12px !important; font-weight:700 !important;';
+const isPortraitDebug = document.body.classList.contains('portrait');
+const dheadStyle = isPortraitDebug ? '' : 'font-size:12px !important; font-weight:700 !important; background:yellow !important;';
+html+='<tr class="dhead"><td colspan="'+(isPortraitDebug?'4':'6')+'" style="'+dheadStyle+'">'+esc(d.meal)+' • '+dmy(d.date)+(d.time?' '+d.time:'')+'</td></tr>';
+
 html+='<tr class="dhead"><td colspan="'+(isPortrait?'4':'6')+'" style="'+dheadStyle+'">'+esc(d.meal)+' • '+dmy(d.date)+(d.time?' '+d.time:'')+'</td></tr>';
       d.rows.forEach(r=> pRow(r.name, r.qty, r.k, r.p, r.f, r.c));
       const t=sumRows(d.rows);
