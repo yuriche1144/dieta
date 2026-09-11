@@ -143,7 +143,7 @@ main{flex:1;padding:18px 0 calc(var(--tab-h) + 20px + env(safe-area-inset-bottom
   font-weight: 800;
 }
 .landscape .tbl tr.dhead td {
-  font-size: 12px;
+  font-size: 10px;
   font-weight: 700;
 }
 .tbl tr.dtotal td{background:#f3edd9;font-weight:800;color:var(--green-deep)}
@@ -1303,7 +1303,7 @@ docs.sort((a, b) => {
   if(showProdDetail){
     // html+='<tr class="sec"><td colspan="'+(isPortrait?'4':'6')+'">Продукты в документах</td></tr>';
     docs.forEach(d=>{
-const dheadStyle = isPortrait ? '' : 'font-size:12px; font-weight:700;';
+const dheadStyle = isPortrait ? '' : 'font-size:10px; font-weight:700;';
 html += '<tr class="dhead"><td colspan="' + (isPortrait ? '4' : '6') + '" style="' + dheadStyle + '">' + esc(d.meal) + ' • ' + dmy(d.date) + (d.time ? ' ' + d.time : '') + '</td></tr>';
       d.rows.forEach(r=> pRow(r.name, r.qty, r.k, r.p, r.f, r.c));
       const t=sumRows(d.rows);
