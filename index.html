@@ -1391,7 +1391,8 @@ $('#repCopy').onclick=async()=>{
 };
 
 function updateOrientation() {
-  const isPortrait = window.innerWidth <= window.innerHeight;
+  const orientation = screen.orientation?.type || '';
+  const isPortrait = orientation.includes('portrait') || window.innerWidth <= window.innerHeight;
   document.body.classList.toggle('portrait', isPortrait);
   document.body.classList.toggle('landscape', !isPortrait);
   renderReport();
