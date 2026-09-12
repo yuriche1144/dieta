@@ -1412,8 +1412,10 @@ $('#repCopy').onclick=async()=>{
 };
 
 function updateOrientation() {
+  // Используем screen.orientation как основной метод
   const orientation = screen.orientation?.type || '';
-  const isPortrait = orientation.includes('portrait') || window.innerWidth <= window.innerHeight;
+  const isPortrait = orientation.includes('portrait');
+  
   document.body.classList.toggle('portrait', isPortrait);
   document.body.classList.toggle('landscape', !isPortrait);
   renderReport();
