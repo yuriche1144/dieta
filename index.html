@@ -12,7 +12,7 @@
 <link rel="manifest" href="manifest.json">
 <link rel="icon" type="image/png" sizes="512x512" href="icon-512.png">
 <link rel="apple-touch-icon" href="icon-512.png">
-<title>DIETA 1.0.49 — журнал питания и веса</title>
+<title>DIETA 1.0.48 — журнал питания и веса</title>
 <style>
 .tbl, .tbl td, .tbl th {
   -webkit-text-size-adjust: 100% !important;
@@ -351,7 +351,7 @@ body.landscape .tbl tr {
 <div id="d-splash">
   <div class="s-logo">DIETA<b>.</b></div>
   <div class="s-sub">журнал питания</div>
-  <div class="s-ver">v 1.0.49</div>
+  <div class="s-ver">v 1.0.48</div>
   <div class="s-cursor"></div>
 </div>
 
@@ -512,7 +512,7 @@ window.__dietaScriptInfo = window.__dietaScriptInfo || function(){
 };
 (function () {
 'use strict';
-var APP_VERSION = '1.0.49';
+var APP_VERSION = '1.0.48';
 var CLAIMED = window.__DIETA_CLAIMED_VERSION;
 function verGT(a,b){ var pa=a.split('.').map(Number), pb=b.split('.').map(Number);
   for(var i=0;i<3;i++){ if((pa[i]||0)>(pb[i]||0)) return true; if((pa[i]||0)<(pb[i]||0)) return false; } return false; }
@@ -1080,71 +1080,119 @@ $('#pSearch').addEventListener('input',renderProducts);
 
 $('#wAdd').onclick=()=>weightForm(null);
 
+
+
 $$('.tab').forEach(t => t.onclick = () => {
+
+  // Активная вкладка
   $$('.tab').forEach(x => x.classList.remove('active'));
   t.classList.add('active');
+
+
+  // Активный экран
   $$('.screen').forEach(s => s.classList.remove('active'));
   $('#screen-' + t.dataset.tab).classList.add('active');
+
 
   const totalsBar = document.getElementById('totalsBar');
   const tabbar = document.getElementById('tabbar');
 
+
+  // Журнал
   if (t.dataset.tab === 'journal') {
-    if (totalsBar) totalsBar.style.display = '';
-    if (tabbar) tabbar.style.display = '';
-  } else if (t.dataset.tab === 'report') {
-    if (totalsBar) totalsBar.style.display = 'none';
-    if (tabbar) tabbar.style.display = 'none';
-    renderReport();
-  } else {
-    if (totalsBar) totalsBar.style.display = 'none';
-    if (tabbar) tabbar.style.display = '';
+
+    if (totalsBar) {
+      totalsBar.style.display = '';
+    }
+
+    if (tabbar) {
+      tabbar.style.display = '';
+    }
   }
 
-  if (t.dataset.tab === 'products') renderProducts();
-  if (t.dataset.tab === 'weight') renderWeights();
-  if (t.dataset.tab === 'service') renderService();
-});
 
-// Переключение вкладок
-$$('.tab').forEach(t => t.onclick = () => {
-  $$('.tab').forEach(x => x.classList.remove('active'));
-  t.classList.add('active');
-  $$('.screen').forEach(s => s.classList.remove('active'));
-  $('#screen-' + t.dataset.tab).classList.add('active');
+  // Отчёт
+  else if (t.dataset.tab === 'report') {
 
-  const totalsBar = document.getElementById('totalsBar');
-  const tabbar = document.getElementById('tabbar');
+    if (totalsBar) {
+      totalsBar.style.display = 'none';
+    }
 
-  if (t.dataset.tab === 'journal') {
-    if (totalsBar) totalsBar.style.display = '';
-    if (tabbar) tabbar.style.display = '';
-  } else if (t.dataset.tab === 'report') {
-    if (totalsBar) totalsBar.style.display = 'none';
-    if (tabbar) tabbar.style.display = 'none';
-    renderReport();
-  } else {
-    if (totalsBar) totalsBar.style.display = 'none';
-    if (tabbar) tabbar.style.display = '';
+    if (tabbar) {
+      tabbar.style.display = 'none';
+    }
   }
 
-  if (t.dataset.tab === 'products') renderProducts();
-  if (t.dataset.tab === 'weight') renderWeights();
-  if (t.dataset.tab === 'service') renderService();
+
+  // Остальные разделы
+  else {
+
+    if (totalsBar) {
+      totalsBar.style.display = 'none';
+    }
+
+    if (tabbar) {
+      tabbar.style.display = '';
+    }
+  }
+
+
+  // Сначала определяем ориентацию.
+  // Это важно: renderReport() зависит от класса
+  // portrait / landscape.
+  updateOrientation();
+
+
+  // Перерисовка соответствующих экранов
+  if (t.dataset.tab === 'report') {
+    renderReport();
+  }
+
+  if (t.dataset.tab === 'products') {
+    renderProducts();
+  }
+
+  if (t.dataset.tab === 'weight') {
+    renderWeights();
+  }
+
+  if (t.dataset.tab === 'service') {
+    renderService();
+  }
+
 });
+
 
 // Кнопка "Домик" в отчёте (возвращает меню)
 $('#repHome').onclick = () => {
+
+  // Переключаем вкладку на журнал
   $$('.tab').forEach(x => x.classList.remove('active'));
   $$('.tab')[0].classList.add('active');
+
+
+  // Показываем журнал
   $$('.screen').forEach(s => s.classList.remove('active'));
   $('#screen-journal').classList.add('active');
-  
+
+
+  // Возвращаем панели
   const totalsBar = document.getElementById('totalsBar');
   const tabbar = document.getElementById('tabbar');
-  if (totalsBar) totalsBar.style.display = '';
-  if (tabbar) tabbar.style.display = '';
+
+  if (totalsBar) {
+    totalsBar.style.display = '';
+  }
+
+  if (tabbar) {
+    tabbar.style.display = '';
+  }
+
+
+  // Вне отчёта всегда используем портретную вёрстку
+  updateOrientation();
 };
+
 
 function renderService(){
   const box=$('#svcArea');
@@ -1272,28 +1320,7 @@ docs.sort((a, b) => {
   
   const isPortrait = document.body.classList.contains('portrait');
   
-// === СИГНАЛЬНЫЙ БЛОК ДЛЯ ОТЛАДКИ ОРИЕНТАЦИИ ===
-let signalBox = document.getElementById('orientSignal');
-if (!signalBox) {
-  signalBox = document.createElement('div');
-  signalBox.id = 'orientSignal';
-  signalBox.style.cssText = 'position:fixed;top:0;left:0;right:0;z-index:99999;padding:15px;font-size:18px;font-weight:bold;text-align:center;color:white;';
-  document.body.appendChild(signalBox);
-}
-signalBox.style.background = isPortrait ? 'red' : 'blue';
-signalBox.innerHTML = `
-  <div>${isPortrait ? ' PORTRAIT' : '🖥️ LANDSCAPE'}</div>
-  <div style="font-size:14px;margin-top:5px;">
-    ${window.innerWidth} × ${window.innerHeight} | 
-    ratio: ${(window.innerWidth/window.innerHeight).toFixed(2)}
-  </div>
-  <div style="font-size:12px;margin-top:3px;">
-    body: ${document.body.className}
-  </div>
-`;
-// === КОНЕЦ СИГНАЛЬНОГО БЛОКА ===
-
- let html = '';
+  let html = '';
   
   // Вспомогательная функция для строки продукта
   const pRow = (name, qty, kcal, p, f, c, isTotal=false) => {
@@ -1412,56 +1439,80 @@ $('#repCopy').onclick=async()=>{
 };
 
 function updateOrientation() {
-  const portraitMQ = window.matchMedia('(orientation: portrait)').matches;
-  const landscapeMQ = window.matchMedia('(orientation: landscape)').matches;
-  const isPortrait = portraitMQ;
-  
-  document.body.classList.toggle('portrait', isPortrait);
-  document.body.classList.toggle('landscape', !isPortrait);
-  renderReport();
+  const activeTab = document.querySelector('.tab.active');
+  const isReport = activeTab && activeTab.dataset.tab === 'report';
+
+  // ВАЖНО:
+  // Ориентация имеет значение только на экране отчёта.
+  // На всех остальных экранах принудительно используем портретную вёрстку.
+  if (!isReport) {
+    document.body.classList.add('portrait');
+    document.body.classList.remove('landscape');
+    return;
+  }
+
+  // Для отчёта определяем фактическую ориентацию окна.
+  // matchMedia — основной способ.
+  // width > height — запасной вариант.
+  const isLandscape =
+    window.matchMedia('(orientation: landscape)').matches ||
+    window.innerWidth > window.innerHeight;
+
+  if (isLandscape) {
+    document.body.classList.add('landscape');
+    document.body.classList.remove('portrait');
+  } else {
+    document.body.classList.add('portrait');
+    document.body.classList.remove('landscape');
+  }
+
+  // После изменения размеров Android/iPhone даём браузеру
+  // немного времени на окончательную перестройку viewport.
+  clearTimeout(window.__reportOrientTimer);
+
+  window.__reportOrientTimer = setTimeout(() => {
+    const currentTab = document.querySelector('.tab.active');
+
+    if (
+      currentTab &&
+      currentTab.dataset.tab === 'report'
+    ) {
+      renderReport();
+    }
+  }, 150);
 }
 
+
+// Изменение размеров окна — основной обработчик
 window.addEventListener('resize', () => {
-  // Визуальная вспышка при resize
-  let flash = document.getElementById('resizeFlash');
-  if (!flash) {
-    flash = document.createElement('div');
-    flash.id = 'resizeFlash';
-    flash.style.cssText = 'position:fixed;bottom:0;left:0;right:0;background:orange;color:black;padding:10px;font-size:16px;font-weight:bold;text-align:center;z-index:99999;opacity:1;transition:opacity 1s;';
-    document.body.appendChild(flash);
-  }
-  flash.textContent = `RESIZE: ${window.innerWidth}×${window.innerHeight}`;
-  flash.style.opacity = '1';
-  setTimeout(() => { flash.style.opacity = '0'; }, 1500);
-  
   clearTimeout(window.__orientTimer);
-  window.__orientTimer = setTimeout(updateOrientation, 200);
+
+  window.__orientTimer = setTimeout(() => {
+    updateOrientation();
+  }, 100);
 });
 
+
+// Старое событие — дополнительная страховка
 window.addEventListener('orientationchange', () => {
-  // Визуальная вспышка при orientationchange
-  let flash = document.getElementById('orientFlash');
-  if (!flash) {
-    flash = document.createElement('div');
-    flash.id = 'orientFlash';
-    flash.style.cssText = 'position:fixed;bottom:60px;left:0;right:0;background:lime;color:black;padding:10px;font-size:16px;font-weight:bold;text-align:center;z-index:99999;opacity:1;transition:opacity 1s;';
-    document.body.appendChild(flash);
-  }
-  flash.textContent = 'ORIENTATION CHANGE!';
-  flash.style.opacity = '1';
-  setTimeout(() => { flash.style.opacity = '0'; }, 1500);
-  
-  setTimeout(updateOrientation, 300);
+  setTimeout(() => {
+    updateOrientation();
+  }, 200);
 });
-updateOrientation();
-// Специальное событие для Screen Orientation API (работает на Android)
-if (screen.orientation && screen.orientation.addEventListener) {
+
+
+// Современный Screen Orientation API
+if (screen.orientation) {
   screen.orientation.addEventListener('change', () => {
-    console.log('screen.orientation change:', screen.orientation.type);
-    setTimeout(updateOrientation, 100);
+    setTimeout(() => {
+      updateOrientation();
+    }, 100);
   });
 }
 
+
+// Начальное состояние
+updateOrientation();
 
 (async()=>{
   try{ await DB.open(); }catch(e){ DB.useLS=true; }
