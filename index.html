@@ -1272,28 +1272,7 @@ docs.sort((a, b) => {
   
   const isPortrait = document.body.classList.contains('portrait');
   
-// === СИГНАЛЬНЫЙ БЛОК ДЛЯ ОТЛАДКИ ОРИЕНТАЦИИ ===
-let signalBox = document.getElementById('orientSignal');
-if (!signalBox) {
-  signalBox = document.createElement('div');
-  signalBox.id = 'orientSignal';
-  signalBox.style.cssText = 'position:fixed;top:0;left:0;right:0;z-index:99999;padding:15px;font-size:18px;font-weight:bold;text-align:center;color:white;';
-  document.body.appendChild(signalBox);
-}
-signalBox.style.background = isPortrait ? 'red' : 'blue';
-signalBox.innerHTML = `
-  <div>${isPortrait ? ' PORTRAIT' : '🖥️ LANDSCAPE'}</div>
-  <div style="font-size:14px;margin-top:5px;">
-    ${window.innerWidth} × ${window.innerHeight} | 
-    ratio: ${(window.innerWidth/window.innerHeight).toFixed(2)}
-  </div>
-  <div style="font-size:12px;margin-top:3px;">
-    body: ${document.body.className}
-  </div>
-`;
-// === КОНЕЦ СИГНАЛЬНОГО БЛОКА ===
-
- let html = '';
+  let html = '';
   
   // Вспомогательная функция для строки продукта
   const pRow = (name, qty, kcal, p, f, c, isTotal=false) => {
@@ -1412,45 +1391,51 @@ $('#repCopy').onclick=async()=>{
 };
 
 function updateOrientation() {
-  const portraitMQ = window.matchMedia('(orientation: portrait)').matches;
-  const landscapeMQ = window.matchMedia('(orientation: landscape)').matches;
-  const isPortrait = portraitMQ;
+  // FOR TESTING ON PC: раскомментируйте ОДНУ из строк ниже для принудительной ориентации
+  // document.body.classList.add('landscape'); document.body.classList.remove('portrait'); return;  // LANDSCAPE
+  // document.body.classList.add('portrait'); document.body.classList.remove('landscape'); return;   // PORTRAIT
+  const width = window.innerWidth;
+  const height = window.innerHeight;
+  const orientation = window.orientation;
+  const screenType = screen.orientation?.type || 'unknown';
   
-  document.body.classList.toggle('portrait', isPortrait);
-  document.body.classList.toggle('landscape', !isPortrait);
-  renderReport();
+  const isLandscape = width > height ||
+                      orientation === 90 ||
+                      orientation === -90 ||
+                      screenType.includes('landscape');
+
+  if (isLandscape) {
+    document.body.classList.add('landscape');
+    document.body.classList.remove('portrait');
+  } else {
+    document.body.classList.add('portrait');
+    document.body.classList.remove('landscape');
+  }
+
+  // Перерисовать отчёт при смене ориентации (с задержкой для iPhone)
+  const activeTab = document.querySelector('.tab.active');
+  if (activeTab && activeTab.dataset.tab === 'report') {
+    setTimeout(() => {
+      setTimeout(() => {
+        renderReport();
+      }, 100);
+    }, 400);
+  }
+
+  // Управление меню
+  const tabbar = document.getElementById('tabbar');
+  if (activeTab && activeTab.dataset.tab === 'report' && isLandscape) {
+    if (tabbar) tabbar.style.display = 'none';
+  } else if (activeTab && activeTab.dataset.tab !== 'report') {
+    if (tabbar) tabbar.style.display = '';
+  }
 }
 
 window.addEventListener('resize', () => {
-  // Визуальная вспышка при resize
-  let flash = document.getElementById('resizeFlash');
-  if (!flash) {
-    flash = document.createElement('div');
-    flash.id = 'resizeFlash';
-    flash.style.cssText = 'position:fixed;bottom:0;left:0;right:0;background:orange;color:black;padding:10px;font-size:16px;font-weight:bold;text-align:center;z-index:99999;opacity:1;transition:opacity 1s;';
-    document.body.appendChild(flash);
-  }
-  flash.textContent = `RESIZE: ${window.innerWidth}×${window.innerHeight}`;
-  flash.style.opacity = '1';
-  setTimeout(() => { flash.style.opacity = '0'; }, 1500);
-  
   clearTimeout(window.__orientTimer);
   window.__orientTimer = setTimeout(updateOrientation, 200);
 });
-
 window.addEventListener('orientationchange', () => {
-  // Визуальная вспышка при orientationchange
-  let flash = document.getElementById('orientFlash');
-  if (!flash) {
-    flash = document.createElement('div');
-    flash.id = 'orientFlash';
-    flash.style.cssText = 'position:fixed;bottom:60px;left:0;right:0;background:lime;color:black;padding:10px;font-size:16px;font-weight:bold;text-align:center;z-index:99999;opacity:1;transition:opacity 1s;';
-    document.body.appendChild(flash);
-  }
-  flash.textContent = 'ORIENTATION CHANGE!';
-  flash.style.opacity = '1';
-  setTimeout(() => { flash.style.opacity = '0'; }, 1500);
-  
   setTimeout(updateOrientation, 300);
 });
 updateOrientation();
