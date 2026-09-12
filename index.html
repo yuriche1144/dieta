@@ -1272,7 +1272,28 @@ docs.sort((a, b) => {
   
   const isPortrait = document.body.classList.contains('portrait');
   
-  let html = '';
+// === СИГНАЛЬНЫЙ БЛОК ДЛЯ ОТЛАДКИ ОРИЕНТАЦИИ ===
+let signalBox = document.getElementById('orientSignal');
+if (!signalBox) {
+  signalBox = document.createElement('div');
+  signalBox.id = 'orientSignal';
+  signalBox.style.cssText = 'position:fixed;top:0;left:0;right:0;z-index:99999;padding:15px;font-size:18px;font-weight:bold;text-align:center;color:white;';
+  document.body.appendChild(signalBox);
+}
+signalBox.style.background = isPortrait ? 'red' : 'blue';
+signalBox.innerHTML = `
+  <div>${isPortrait ? ' PORTRAIT' : '🖥️ LANDSCAPE'}</div>
+  <div style="font-size:14px;margin-top:5px;">
+    ${window.innerWidth} × ${window.innerHeight} | 
+    ratio: ${(window.innerWidth/window.innerHeight).toFixed(2)}
+  </div>
+  <div style="font-size:12px;margin-top:3px;">
+    body: ${document.body.className}
+  </div>
+`;
+// === КОНЕЦ СИГНАЛЬНОГО БЛОКА ===
+
+ let html = '';
   
   // Вспомогательная функция для строки продукта
   const pRow = (name, qty, kcal, p, f, c, isTotal=false) => {
@@ -1399,12 +1420,35 @@ function updateOrientation() {
 }
 
 window.addEventListener('resize', () => {
-  console.log('RESIZE:', window.innerWidth, 'x', window.innerHeight);
+  // Визуальная вспышка при resize
+  let flash = document.getElementById('resizeFlash');
+  if (!flash) {
+    flash = document.createElement('div');
+    flash.id = 'resizeFlash';
+    flash.style.cssText = 'position:fixed;bottom:0;left:0;right:0;background:orange;color:black;padding:10px;font-size:16px;font-weight:bold;text-align:center;z-index:99999;opacity:1;transition:opacity 1s;';
+    document.body.appendChild(flash);
+  }
+  flash.textContent = `RESIZE: ${window.innerWidth}×${window.innerHeight}`;
+  flash.style.opacity = '1';
+  setTimeout(() => { flash.style.opacity = '0'; }, 1500);
+  
   clearTimeout(window.__orientTimer);
   window.__orientTimer = setTimeout(updateOrientation, 200);
 });
+
 window.addEventListener('orientationchange', () => {
-  console.log('ORIENTATION CHANGE');
+  // Визуальная вспышка при orientationchange
+  let flash = document.getElementById('orientFlash');
+  if (!flash) {
+    flash = document.createElement('div');
+    flash.id = 'orientFlash';
+    flash.style.cssText = 'position:fixed;bottom:60px;left:0;right:0;background:lime;color:black;padding:10px;font-size:16px;font-weight:bold;text-align:center;z-index:99999;opacity:1;transition:opacity 1s;';
+    document.body.appendChild(flash);
+  }
+  flash.textContent = 'ORIENTATION CHANGE!';
+  flash.style.opacity = '1';
+  setTimeout(() => { flash.style.opacity = '0'; }, 1500);
+  
   setTimeout(updateOrientation, 300);
 });
 updateOrientation();
