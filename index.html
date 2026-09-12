@@ -1399,10 +1399,12 @@ function updateOrientation() {
 }
 
 window.addEventListener('resize', () => {
+  console.log('RESIZE:', window.innerWidth, 'x', window.innerHeight);
   clearTimeout(window.__orientTimer);
   window.__orientTimer = setTimeout(updateOrientation, 200);
 });
 window.addEventListener('orientationchange', () => {
+  console.log('ORIENTATION CHANGE');
   setTimeout(updateOrientation, 300);
 });
 updateOrientation();
